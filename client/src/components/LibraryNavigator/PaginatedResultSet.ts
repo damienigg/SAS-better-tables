@@ -1,8 +1,9 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import type { SortModelItem } from "ag-grid-community";
+// Modifications © 2026 Damien Iggiotti — switched the sort model type to a
+// local definition that does not depend on ag-grid.
 
-import { TableQuery } from "./types";
+import { SortModel, TableQuery } from "./types";
 
 class PaginatedResultSet<T> {
   constructor(
@@ -12,7 +13,7 @@ class PaginatedResultSet<T> {
   public async getData(
     start: number,
     end: number,
-    sortModel: SortModelItem[],
+    sortModel: SortModel[],
     query: TableQuery | undefined,
   ): Promise<T> {
     return await this.queryForData(start, end, sortModel, query);

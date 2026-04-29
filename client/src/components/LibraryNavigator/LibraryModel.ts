@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { ProgressLocation, l10n, window } from "vscode";
 
-import type { SortModelItem } from "ag-grid-community";
 import { Writable } from "stream";
 
 import PaginatedResultSet from "./PaginatedResultSet";
@@ -11,6 +10,7 @@ import {
   LibraryAdapter,
   LibraryItem,
   LibraryItemType,
+  SortModel,
   TableData,
   TableQuery,
   TableRow,
@@ -32,7 +32,7 @@ class LibraryModel {
       async (
         start: number,
         end: number,
-        sortModel: SortModelItem[],
+        sortModel: SortModel[],
         query: TableQuery | undefined,
       ) => {
         await this.libraryAdapter.setup();

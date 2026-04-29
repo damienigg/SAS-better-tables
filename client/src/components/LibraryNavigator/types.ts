@@ -1,6 +1,8 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import type { SortModelItem } from "ag-grid-community";
+// Modifications © 2026 Damien Iggiotti — replaced ag-grid SortModelItem
+// with a local SortModel type so the data-access stack no longer depends on
+// the grid library used by the webview.
 
 import { ColumnCollection, TableInfo } from "../../connection/rest/api/compute";
 
@@ -30,6 +32,12 @@ export interface TableQuery {
   filterValue: string;
 }
 
+export type SortDirection = "asc" | "desc";
+export interface SortModel {
+  colId: string;
+  sort: SortDirection;
+}
+
 export interface LibraryAdapter {
   connect(): Promise<void>;
   deleteTable(item: LibraryItem): Promise<void>;
@@ -49,7 +57,7 @@ export interface LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
-    sortModel: SortModelItem[],
+    sortModel: SortModel[],
     query: TableQuery | undefined,
   ): Promise<TableData>;
   getRowsAsCSV(

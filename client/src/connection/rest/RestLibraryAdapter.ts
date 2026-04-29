@@ -1,12 +1,12 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import type { SortModelItem } from "ag-grid-community";
 import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
 import {
   LibraryAdapter,
   LibraryItem,
+  SortModel,
   TableData,
   TableQuery,
 } from "../../components/LibraryNavigator/types";
@@ -51,7 +51,7 @@ class RestLibraryAdapter implements LibraryAdapter {
     item: Pick<LibraryItem, "name" | "library">,
     start: number,
     limit: number,
-    sortModel: SortModelItem[],
+    sortModel: SortModel[],
     query: TableQuery | undefined,
   ): Promise<TableData> {
     if (sortModel.length > 0) {
@@ -85,7 +85,7 @@ class RestLibraryAdapter implements LibraryAdapter {
     item: Pick<LibraryItem, "name" | "library">,
     start: number,
     limit: number,
-    sortModel: SortModelItem[],
+    sortModel: SortModel[],
     query: TableQuery | undefined,
   ): Promise<TableData> {
     const { data: viewData } = await this.retryOnFail(
@@ -107,20 +107,29 @@ class RestLibraryAdapter implements LibraryAdapter {
         ),
     );
 
-    const results = await this.getRows(
-      {
-        library: viewData.libref,
-        name: viewData.name,
-      },
-      start,
-      limit,
-      [],
-      query,
-    );
-
-    await this.deleteTable({ library: viewData.libref, name: viewData.name });
-
-    return results;
+    try {
+      return await this.getRows(
+        {
+          library: viewData.libref,
+          name: viewData.name,
+        },
+        start,
+        limit,
+        [],
+        query,
+      );
+    } finally {
+      // Always drop the temp sort view, even if the row read failed.
+      // Upstream omitted this finally block, so failed reads leaked views.
+      try {
+        await this.deleteTable({
+          library: viewData.libref,
+          name: viewData.name,
+        });
+      } catch {
+        // best effort cleanup; do not mask the original error
+      }
+    }
   }
 
   public async getRowsAsCSV(
