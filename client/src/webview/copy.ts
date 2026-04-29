@@ -26,7 +26,7 @@ interface RowMatrix {
 
 function materialise(src: CopySource): RowMatrix {
   const b = bounds(src.selection);
-  if (!b) return { cols: [], rows: [], rowIndices: [] };
+  if (!b) {return { cols: [], rows: [], rowIndices: [] };}
 
   const cols = src.columns.slice(b.fromCol, b.toCol + 1);
   const rows: Array<Array<string | null>> = [];
@@ -88,7 +88,7 @@ export function buildCopyText(
     return headerRow(src.columns).join("\t");
   }
   const m = materialise(src);
-  if (m.rows.length === 0) return "";
+  if (m.rows.length === 0) {return "";}
 
   switch (format) {
     case "plain":

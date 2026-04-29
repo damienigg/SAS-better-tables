@@ -24,8 +24,10 @@ function DropMenu({ label, children }: MenuProps) {
         onClick={() => setOpen((b) => !b)}
         onBlur={(e) => {
           // Close when focus leaves the menu entirely (not when moving to a
-          // child item).
-          if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) {
+          // child item). `relatedTarget` is the new focus owner.
+          const parent = e.currentTarget.parentElement;
+          const next = e.relatedTarget;
+          if (!parent || !(next instanceof Node) || !parent.contains(next)) {
             setOpen(false);
           }
         }}

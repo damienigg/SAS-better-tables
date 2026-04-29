@@ -90,7 +90,7 @@ export abstract class WebView {
     return this;
   }
 
-  abstract processMessage(event: Event): void;
+  abstract processMessage(event: unknown): void;
 
   public withPanel(webviewPanel: WebviewPanel): WebView {
     this.panel = webviewPanel;

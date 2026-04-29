@@ -79,9 +79,9 @@ export function prettifyXML(value: string): string {
       const isClose = tag.startsWith("</");
       const isSelfClose = tag.endsWith("/>");
       const isDecl = tag.startsWith("<?") || tag.startsWith("<!");
-      if (isClose) depth = Math.max(0, depth - 1);
+      if (isClose) {depth = Math.max(0, depth - 1);}
       prefix = "  ".repeat(depth);
-      if (!isClose && !isSelfClose && !isDecl) depth++;
+      if (!isClose && !isSelfClose && !isDecl) {depth++;}
       return "\n" + prefix + tag;
     })
     .replace(/^\n/, "");

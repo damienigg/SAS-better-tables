@@ -14,8 +14,8 @@ import "./DataViewer.css";
 import { App } from "./App";
 
 const mount = document.querySelector(".data-viewer-container");
-if (mount) {
-  createRoot(mount as HTMLElement).render(
+if (mount instanceof HTMLElement) {
+  createRoot(mount).render(
     <StrictMode>
       <App />
     </StrictMode>,

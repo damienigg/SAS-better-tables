@@ -18,7 +18,7 @@ export function CellDetail() {
   const columns = useStore((s) => s.columns);
   const rowsMap = useStore((s) => s.rows);
 
-  if (!cellDetail) return null;
+  if (!cellDetail) {return null;}
 
   const { row, col } = cellDetail;
   const column = columns[col];
@@ -41,10 +41,10 @@ interface BodyProps {
 
 function CellDetailBody({ row, columnName, value, onClose }: BodyProps) {
   const formatted = useMemo(() => {
-    if (value === null || value === undefined) return { text: "NULL", kind: "text" as const };
+    if (value === null || value === undefined) {return { text: "NULL", kind: "text" as const };}
     const kind = detectContent(value);
-    if (kind === "json") return { text: prettifyJSON(value), kind };
-    if (kind === "xml") return { text: prettifyXML(value), kind };
+    if (kind === "json") {return { text: prettifyJSON(value), kind };}
+    if (kind === "xml") {return { text: prettifyXML(value), kind };}
     return { text: value, kind };
   }, [value]);
 

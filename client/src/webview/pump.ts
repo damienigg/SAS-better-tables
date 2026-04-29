@@ -24,7 +24,7 @@ const pending = new Map<number, PendingRequest>();
 export function ensureRange(startRow: number, endRow: number): void {
   const s = useStore.getState();
   const { pageSize, requestedPages, rowCount, sort, filters, generation } = s;
-  if (rowCount === 0) return;
+  if (rowCount === 0) {return;}
 
   const firstPage = Math.max(0, Math.floor(startRow / pageSize));
   const lastPage = Math.min(
@@ -33,7 +33,7 @@ export function ensureRange(startRow: number, endRow: number): void {
   );
 
   for (let p = firstPage; p <= lastPage; p++) {
-    if (requestedPages.has(p)) continue;
+    if (requestedPages.has(p)) {continue;}
     const start = p * pageSize;
     const end = Math.min(rowCount - 1, start + pageSize - 1);
     const reqId = nextReqId();
@@ -57,10 +57,10 @@ export function bindPump(): () => void {
     if (msg.kind === "rows-resp") {
       const tracked = pending.get(msg.reqId);
       pending.delete(msg.reqId);
-      if (!tracked) return;
+      if (!tracked) {return;}
       const cur = useStore.getState();
       // Drop responses from a stale sort/filter epoch.
-      if (tracked.generation !== cur.generation) return;
+      if (tracked.generation !== cur.generation) {return;}
       cur.applyRows(msg.start, msg.rows, msg.rowCount);
     } else if (msg.kind === "error") {
       useStore.getState().setError(msg.message);

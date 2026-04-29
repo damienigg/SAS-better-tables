@@ -121,7 +121,7 @@ export const useStore = create<State & Actions>((set) => ({
   markRequested: (pages) =>
     set((s) => {
       const next = new Set(s.requestedPages);
-      for (const p of pages) next.add(p);
+      for (const p of pages) {next.add(p);}
       return { requestedPages: next };
     }),
 

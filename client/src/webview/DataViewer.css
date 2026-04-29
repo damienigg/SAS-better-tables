@@ -249,21 +249,37 @@ body,
   border-top: 1px solid var(--vscode-editorWidget-border, transparent);
 }
 
-/* Cells. */
+/* Cells. The wrapping .rdg-cell padding is zeroed for data cells so that
+ * .btv-cell (the CellView root) can fill the entire cell box and paint
+ * its own selection background. The row-number gutter keeps its default
+ * padding (it's not a `.btv-data-cell`). */
+.rdg-cell.btv-data-cell {
+  padding: 0;
+}
 .btv-cell {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  height: 100%;
   width: 100%;
+  box-sizing: border-box;
+  padding: 0 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: default;
 }
 .btv-cell-num {
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  justify-content: flex-end;
 }
 .btv-cell-null {
   color: var(--vscode-disabledForeground, rgba(128, 128, 128, 0.7));
   font-style: italic;
+}
+.btv-cell-selected {
+  background: var(--vscode-editor-selectionBackground,
+    rgba(38, 79, 120, 0.4));
+  color: var(--vscode-editor-selectionForeground, inherit);
 }
 
 /* Row-number gutter. */
@@ -279,13 +295,6 @@ body,
   display: block;
   text-align: right;
   font-weight: 600;
-}
-
-/* Selection highlight (applied imperatively in Grid.tsx). */
-.rdg-cell.btv-selected {
-  background: var(--vscode-editor-selectionBackground,
-    rgba(38, 79, 120, 0.4)) !important;
-  color: var(--vscode-editor-selectionForeground, inherit);
 }
 
 /* ----------------------------- status bar ---------------------------- */

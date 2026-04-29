@@ -28,7 +28,9 @@ export function FilterPopup({ column, current, onClose }: Props) {
     const seen = new Set<string>();
     rows.forEach((row) => {
       const v = row[colIdx];
-      if (v != null) seen.add(v);
+      if (v !== null && v !== undefined) {
+        seen.add(v);
+      }
     });
     return [...seen].sort((a, b) => a.localeCompare(b));
   }, [rows, colIdx]);
@@ -43,10 +45,16 @@ export function FilterPopup({ column, current, onClose }: Props) {
   // Close on outside click or Escape.
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      if (
+        ref.current &&
+        e.target instanceof Node &&
+        !ref.current.contains(e.target)
+      ) {
+        onClose();
+      }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {onClose();}
     };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
@@ -68,8 +76,8 @@ export function FilterPopup({ column, current, onClose }: Props) {
 
   const toggle = (v: string) => {
     const next = new Set(checked);
-    if (next.has(v)) next.delete(v);
-    else next.add(v);
+    if (next.has(v)) {next.delete(v);}
+    else {next.add(v);}
     setChecked(next);
   };
 

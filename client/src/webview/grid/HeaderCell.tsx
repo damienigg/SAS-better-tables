@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 
-import type { ColumnFilter, ColumnMeta, SortSpec } from "../protocol";
+import type { ColumnMeta, SortSpec } from "../protocol";
 import { useStore } from "../store";
 import { l10n } from "../theme";
 import { FilterPopup } from "./FilterPopup";
@@ -13,8 +13,8 @@ interface Props {
 }
 
 function nextSortDir(spec: SortSpec | undefined): SortSpec | null {
-  if (!spec) return { colId: "", dir: "asc" };
-  if (spec.dir === "asc") return { ...spec, dir: "desc" };
+  if (!spec) {return { colId: "", dir: "asc" };}
+  if (spec.dir === "asc") {return { ...spec, dir: "desc" };}
   return null; // third click clears
 }
 

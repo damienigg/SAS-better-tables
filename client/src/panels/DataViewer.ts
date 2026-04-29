@@ -14,14 +14,7 @@
 // paginator + fetchColumns + column-properties opener) so the
 // LibraryNavigator command registration does not need to change.
 
-import {
-  Uri,
-  ViewColumn,
-  env,
-  l10n,
-  window,
-  workspace,
-} from "vscode";
+import { Uri, env, l10n, window, workspace } from "vscode";
 
 import { createWriteStream } from "fs";
 import path from "path";
@@ -123,11 +116,11 @@ class DataViewer extends WebView {
     return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
   }
 
-  // Parent class types this `event: Event` for legacy reasons; the runtime
-  // payload is the JSON message posted from the webview, so we narrow on
-  // entry.
-  public async processMessage(event: Event): Promise<void> {
-    const msg = event as unknown as WebviewMessage;
+  public async processMessage(event: unknown): Promise<void> {
+    if (!isWebviewMessage(event)) {
+      return;
+    }
+    const msg: WebviewMessage = event;
     try {
       switch (msg.kind) {
         case "ready":
@@ -185,7 +178,6 @@ class DataViewer extends WebView {
       sort: s.dir,
     }));
     const query = combineFilters(req.filters);
-    const limit = req.end - req.start + 1;
 
     const { data, error } = await this.paginator.getData(
       req.start,
@@ -238,7 +230,7 @@ class DataViewer extends WebView {
     const target = await window.showSaveDialog({
       defaultUri: Uri.file(path.join(defaultDir, defaultName)),
     });
-    if (!target) return;
+    if (!target) {return;}
 
     const sortModel = state.sort.map<SortModel>((s) => ({
       colId: s.colId,
@@ -257,7 +249,7 @@ class DataViewer extends WebView {
       stream.write("\n");
       for await (const cells of this.iterAllRows(sortModel, query)) {
         rowIdx++;
-        if (scope === "selection" && !inSelection(rowIdx)) continue;
+        if (scope === "selection" && !inSelection(rowIdx)) {continue;}
         const out: (string | null)[] = cols.map((_c, i) => cells[i] ?? null);
         stream.write(out.map(csvCell).join(","));
         stream.write("\n");
@@ -269,7 +261,7 @@ class DataViewer extends WebView {
       let first = true;
       for await (const cells of this.iterAllRows(sortModel, query)) {
         rowIdx++;
-        if (scope === "selection" && !inSelection(rowIdx)) continue;
+        if (scope === "selection" && !inSelection(rowIdx)) {continue;}
         const obj: Record<string, string> = {};
         for (let i = 0; i < cols.length; i++) {
           if (
@@ -281,7 +273,7 @@ class DataViewer extends WebView {
           }
           obj[cols[i].name] = cells[i] ?? "";
         }
-        if (!first) stream.write(",\n");
+        if (!first) {stream.write(",\n");}
         stream.write("  " + JSON.stringify(obj));
         first = false;
       }
@@ -295,7 +287,7 @@ class DataViewer extends WebView {
       ws.addRow(cols.map((c) => c.label || c.name));
       for await (const cells of this.iterAllRows(sortModel, query)) {
         rowIdx++;
-        if (scope === "selection" && !inSelection(rowIdx)) continue;
+        if (scope === "selection" && !inSelection(rowIdx)) {continue;}
         const out: (string | null)[] = [];
         for (let i = 0; i < cols.length; i++) {
           if (
@@ -327,9 +319,9 @@ class DataViewer extends WebView {
         sortModel,
         query,
       );
-      if (error) throw error;
-      if (data.count >= 0) total = data.count;
-      if (data.rows.length === 0) break;
+      if (error) {throw error;}
+      if (data.count >= 0) {total = data.count;}
+      if (data.rows.length === 0) {break;}
       for (const row of data.rows) {
         // Strip the leading index cell that the adapter prepends.
         yield (row.cells ?? []).slice(1);
@@ -397,7 +389,7 @@ function combineFilters(filters: ColumnFilter[]): TableQuery | undefined {
 }
 
 function csvCell(v: string | null | undefined): string {
-  if (v === null || v === undefined) return "";
+  if (v === null || v === undefined) {return "";}
   if (
     v.indexOf(",") === -1 &&
     v.indexOf('"') === -1 &&
@@ -433,24 +425,24 @@ function inSelectionAtCell(
   return false;
 }
 
-function projectCells(
-  cells: string[],
-  cols: ColumnMeta[],
-  row: number,
-  scope: ExportScope,
-  inSelection: (row: number) => boolean,
-): (string | null)[] {
-  void inSelection; // future: respect partial-row column selection
-  void scope;
-  void row;
-  // For CSV we always emit a value (or empty) for every column to keep
-  // the table rectangular; selection-aware blanking happens in the JSON
-  // and XLSX paths.
-  const out: (string | null)[] = [];
-  for (let i = 0; i < cols.length; i++) {
-    out.push(cells[i] ?? null);
+const KNOWN_KINDS = new Set([
+  "ready",
+  "rows-req",
+  "open-column-properties",
+  "save-view-state",
+  "copy",
+  "export",
+]);
+
+function isWebviewMessage(value: unknown): value is WebviewMessage {
+  if (typeof value !== "object" || value === null) {
+    return false;
   }
-  return out;
+  if (!("kind" in value)) {
+    return false;
+  }
+  const kind = value.kind;
+  return typeof kind === "string" && KNOWN_KINDS.has(kind);
 }
 
 export default DataViewer;

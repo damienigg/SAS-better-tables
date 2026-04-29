@@ -8,7 +8,7 @@ import { l10n } from "./theme";
 import { computeStats } from "./stats";
 
 function fmt(n: number): string {
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) {return "—";}
   if (Math.abs(n) >= 1e9 || (n !== 0 && Math.abs(n) < 1e-3)) {
     return n.toExponential(4);
   }

@@ -10,8 +10,8 @@ export type ThemeKind = "light" | "dark" | "high-contrast";
 
 export function detectTheme(): ThemeKind {
   const cls = document.body.classList;
-  if (cls.contains("vscode-high-contrast")) return "high-contrast";
-  if (cls.contains("vscode-dark")) return "dark";
+  if (cls.contains("vscode-high-contrast")) {return "high-contrast";}
+  if (cls.contains("vscode-dark")) {return "dark";}
   return "light";
 }
 

@@ -70,14 +70,14 @@ export function* iterCells(
     for (let row = r.fromRow; row <= r.toRow; row++) {
       for (let col = r.fromCol; col <= r.toCol; col++) {
         const key = row * 1_000_000 + col;
-        if (seen.has(key)) continue;
+        if (seen.has(key)) {continue;}
         seen.add(key);
         cells.push({ row, col });
       }
     }
   }
   cells.sort((a, b) => (a.row - b.row) || (a.col - b.col));
-  for (const c of cells) yield c;
+  for (const c of cells) {yield c;}
 }
 
 export function cellCount(ranges: CellRange[]): number {
@@ -90,16 +90,16 @@ export function cellCount(ranges: CellRange[]): number {
 
 /** Bounding rectangle of all ranges, or null when empty. */
 export function bounds(ranges: CellRange[]): CellRange | null {
-  if (ranges.length === 0) return null;
+  if (ranges.length === 0) {return null;}
   let fromRow = Infinity,
     toRow = -Infinity,
     fromCol = Infinity,
     toCol = -Infinity;
   for (const r of ranges) {
-    if (r.fromRow < fromRow) fromRow = r.fromRow;
-    if (r.toRow > toRow) toRow = r.toRow;
-    if (r.fromCol < fromCol) fromCol = r.fromCol;
-    if (r.toCol > toCol) toCol = r.toCol;
+    if (r.fromRow < fromRow) {fromRow = r.fromRow;}
+    if (r.toRow > toRow) {toRow = r.toRow;}
+    if (r.fromCol < fromCol) {fromCol = r.fromCol;}
+    if (r.toCol > toCol) {toCol = r.toCol;}
   }
   return { fromRow, toRow, fromCol, toCol };
 }

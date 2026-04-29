@@ -42,7 +42,7 @@ export function computeStats({ ranges, columns, getCell }: Source): Stats {
 
   for (const cell of iterCells(ranges)) {
     const v = getCell(cell.row, cell.col);
-    if (v === undefined) continue; // not loaded yet
+    if (v === undefined) {continue;} // not loaded yet
     if (v === null) {
       nullCount++;
       continue;
@@ -58,8 +58,8 @@ export function computeStats({ ranges, columns, getCell }: Source): Stats {
       }
       sum += n;
       count++;
-      if (n < min) min = n;
-      if (n > max) max = n;
+      if (n < min) {min = n;}
+      if (n > max) {max = n;}
     } else {
       allNumeric = false;
     }
