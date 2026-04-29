@@ -1,4 +1,4 @@
-# Better SAS Table Viewer
+# SAS Better Tables
 
 A fork of the [SAS VS Code extension](https://github.com/sassoftware/vscode-sas-extension)
 with the data-table viewer rebuilt to match the look, feel and capabilities

@@ -1,6 +1,6 @@
 {
-  "name": "better-table-viewer",
-  "displayName": "Better SAS Table Viewer",
+  "name": "sas-better-tables",
+  "displayName": "SAS Better Tables",
   "description": "Fork of the SAS VS Code extension with a redesigned table viewer modeled after Microsoft's mssql results grid.",
   "version": "0.1.0",
   "categories": [

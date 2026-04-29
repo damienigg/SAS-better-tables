@@ -1,5 +1,5 @@
 {
-  "name": "better-table-viewer-client",
+  "name": "sas-better-tables-client",
   "description": "VS Code client (forked from SAS extension) with redesigned table viewer",
   "author": "Damien Iggiotti",
   "license": "Apache-2.0",
