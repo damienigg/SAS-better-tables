@@ -1,0 +1,81 @@
+<#
+  Use this script to test itc connections. This imports our itc script and is runnable in
+  Powershell in the following way (see optional parameters in "Script setup" region):
+  `C:\<scriptPath>\itc-connection-test.ps1 -HostName <host> -Username <user> -Password <password>`
+
+  See a list of optional parameters below.
+
+  Additionally, you can modify code in the "Code to execute" region to fit your testing needs.
+#>
+
+#region Script setup
+# NOTE: You shouldn't need to edit anything in this region.
+param (
+  [string] $HostName = "",
+  [string] $Port = "8591",
+  [string] $Protocol = "2", # IOMBridge
+  [string] $Username = "",
+  [string] $Password = "",
+  [string] $DisplayLang = "EN_US",
+  [string] $InteropLibraryPath = ""
+)
+
+$global:interopLibraryFolderPath = $InteropLibraryPath
+
+Set-Location "$PSScriptRoot\..\..\client\src\connection\itc\script\"
+
+function GetInteropDirectory {
+  # try to load from user specified path first
+  if ("$($global:interopLibraryFolderPath)") {
+    if (Test-Path -Path "$($global:interopLibraryFolderPath)\\SASInterop.dll") {
+      return "$($global:interopLibraryFolderPath)"
+    }
+  }
+
+  # try to load path from registry
+  try {
+    $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+    if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
+      return $pathFromRegistry
+    }
+  } catch {
+  }
+
+  # try to load path from integration technologies
+  $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+  if (Test-Path -Path "$itcPath\\SASInterop.dll") {
+    return $itcPath
+  }
+
+  return ""
+}
+
+try {
+  $interopDir = GetInteropDirectory
+  Add-Type -Path "$interopDir\\SASInterop.dll"
+  Add-Type -Path "$interopDir\\SASOManInterop.dll"
+} catch {
+  Write-Error "$($global:env.Tags.ErrorStartTag)LoadingInterop error: $_$($global:env.Tags.ErrorEndTag)"
+}
+
+. ".\itc.ps1"
+
+$runner = New-Object -TypeName SASRunner
+$runner.Setup($HostName, $Username, $Password, [int]$Port, [int]$Protocol, "ITC Connection Test", $DisplayLang)
+$runner.ResolveSystemVars()
+#endregion
+
+#region Code to execute
+# Uncomment the following line to set any options
+$runner.SetOptions("VALIDVARNAME=ANY")
+
+# Adjust the value of $code as needed
+$code = "proc options group=languagecontrol;"
+$runner.Run($code)
+
+do {
+  $chunkSize = 32768
+  $log = $runner.FlushLog($chunkSize)
+  Write-Host $log
+} while ($log.Length -gt 0)
+#endregion

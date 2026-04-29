@@ -1,0 +1,78 @@
+// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+import { ProgressLocation, l10n, window } from "vscode";
+
+import type { OnLogFn, RunResult } from ".";
+
+export type SessionContextAttributes =
+  | {
+      fileNavigationCustomRootPath: string | undefined;
+      fileNavigationRoot: "CUSTOM" | "SYSTEM" | "USER" | undefined;
+    }
+  | undefined;
+
+export abstract class Session {
+  protected _rejectRun: (reason?: unknown) => void | undefined;
+  protected _connectionPromise: Promise<void> | undefined;
+
+  protected _onSessionLogFn: OnLogFn | undefined;
+  public set onSessionLogFn(value: OnLogFn) {
+    this._onSessionLogFn = value;
+  }
+
+  protected _onExecutionLogFn: OnLogFn | undefined;
+  public set onExecutionLogFn(value: OnLogFn) {
+    this._onExecutionLogFn = value;
+  }
+
+  async setup(silent?: boolean): Promise<void> {
+    // If we already have a connection promise we're awaiting, lets use that.
+    // Otherwise, establish a new connection
+    this._connectionPromise ||= this.establishConnection();
+    if (silent) {
+      const resolvedData = await this._connectionPromise;
+      this._connectionPromise = undefined;
+      return resolvedData;
+    }
+
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Connecting to SAS session..."),
+      },
+      async () => {
+        const resolvedData = await this._connectionPromise;
+        this._connectionPromise = undefined;
+        return resolvedData;
+      },
+    );
+  }
+
+  protected abstract establishConnection(): Promise<void>;
+
+  run(code: string, ...args): Promise<RunResult> {
+    return new Promise((resolve, reject) => {
+      this._rejectRun = reject;
+      this._run(code, ...args)
+        .then(resolve, reject)
+        .finally(() => (this._rejectRun = undefined));
+    });
+  }
+  protected abstract _run(code: string, ...args): Promise<RunResult>;
+
+  cancel?(): Promise<void>;
+
+  close(): Promise<void> | void {
+    if (this._rejectRun) {
+      this._rejectRun({ message: l10n.t("The SAS session has closed.") });
+      this._rejectRun = undefined;
+    }
+    this._connectionPromise = undefined;
+    return this._close();
+  }
+  protected abstract _close(): Promise<void> | void;
+
+  abstract sessionId?(): string | undefined;
+
+  contextAttributes?(): Promise<SessionContextAttributes>;
+}

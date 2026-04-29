@@ -1,0 +1,20 @@
+name: Build VSIX for testing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+      - run: npm ci
+      - run: npx @vscode/vsce package
+      - uses: actions/upload-artifact@v7
+        with:
+          path: ./*.vsix
+          retention-days: 5

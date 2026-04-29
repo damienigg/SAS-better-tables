@@ -1,0 +1,15 @@
+# generated files
+package-lock.json
+out/
+dist/
+.vscode-test/
+website/build/
+
+# git files
+.git/
+
+# data files
+server/**/*.json
+
+# VSCode history
+.history/

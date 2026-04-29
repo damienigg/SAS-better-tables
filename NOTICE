@@ -1,0 +1,21 @@
+better-table-viewer
+Copyright 2026 Damien Iggiotti
+
+This product is a fork of the SAS VS Code extension:
+  Project:  vscode-sas-extension
+  Source:   https://github.com/sassoftware/vscode-sas-extension
+  Commit:   2dfcc49ed9aa61562ad346d172c67da97062584c (2026-04-28)
+  License:  Apache License, Version 2.0
+  Notices:  Copyright (c) SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+
+The original LICENSE file from SAS Institute is preserved unchanged.
+
+The fork replaces the data table viewer (client/src/webview/* and
+client/src/panels/DataViewer.ts) with an independent re-implementation
+modeled after the look and feel of the Microsoft mssql VS Code extension's
+results grid (https://github.com/Microsoft/vscode-mssql, MIT license). No
+source from the mssql extension is included; behavior parity was achieved
+by clean-room re-implementation against publicly observable UX.
+
+All file-level copyright headers in unchanged upstream files are preserved.
+New files contributed by this fork carry their own header.

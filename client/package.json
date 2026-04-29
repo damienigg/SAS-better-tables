@@ -1,0 +1,38 @@
+{
+  "name": "better-table-viewer-client",
+  "description": "VS Code client (forked from SAS extension) with redesigned table viewer",
+  "author": "Damien Iggiotti",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "publisher": "local-fork",
+  "engines": {
+    "vscode": "^1.89.0"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "exceljs": "^4.4.0",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.33",
+    "marked": "^17.0.5",
+    "marked-katex-extension": "^5.1.7",
+    "media-typer": "^1.1.0",
+    "papaparse": "^5.5.3",
+    "react": "^19.2.4",
+    "react-data-grid": "7.0.0-beta.47",
+    "react-dom": "^19.2.4",
+    "ssh2": "^1.17.0",
+    "uuid": "^13.0.0",
+    "vscode-languageclient": "^10.0.0-next.2",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.3.15",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/ssh2": "^1.15.5",
+    "@types/uuid": "^11.0.0",
+    "@types/vscode": "1.82.0",
+    "@types/vscode-notebook-renderer": "^1.72.4",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

@@ -1,0 +1,213 @@
+body {
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+html,
+body,
+.data-viewer-container,
+.data-viewer {
+  height: 100%;
+}
+
+.data-viewer-container {
+  overflow: hidden;
+}
+
+.data-viewer {
+  padding: 1rem 1rem 0 1rem;
+}
+
+.header-icon.float,
+.header-icon.date,
+.header-icon.time,
+.header-icon.date-time,
+.header-icon.currency,
+.header-icon.char {
+  width: 16px;
+  height: 22px;
+  margin-right: 0.25rem;
+}
+
+/* DEFAULT ICONS */
+
+.header-icon.float {
+  background: url(../../../icons/light/tableHeaderNumericTypeLight.svg) center
+    no-repeat;
+}
+
+.header-icon.time,
+.header-icon.date-time,
+.header-icon.date {
+  background: url(../../../icons/light/tableHeaderDateLight.svg) center
+    no-repeat;
+}
+
+.header-icon.currency {
+  background: url(../../../icons/light/tableHeaderCurrencyLight.svg) center
+    no-repeat;
+}
+
+.header-icon.char {
+  background: url(../../../icons/light/tableHeaderCharacterTypeLight.svg) center
+    no-repeat;
+}
+
+/* DARK MODE ICONS */
+
+.vscode-dark .header-icon.float,
+.vscode-high-contrast .header-icon.float {
+  background: url(../../../icons/dark/tableHeaderNumericTypeDark.svg) center
+    no-repeat;
+}
+
+.header-icon.time,
+.header-icon.date-time,
+.vscode-dark .header-icon.date,
+.vscode-high-contrast .header-icon.date {
+  background: url(../../../icons/dark/tableHeaderDateDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.currency,
+.vscode-high-contrast .header-icon.currency {
+  background: url(../../../icons/dark/tableHeaderCurrencyDark.svg) center
+    no-repeat;
+}
+
+.vscode-dark .header-icon.char,
+.vscode-high-contrast .header-icon.char {
+  background: url(../../../icons/dark/tableHeaderCharacterTypeDark.svg) center
+    no-repeat;
+}
+
+.ag-cell-label-container button {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ag-cell-label-container {
+  position: relative;
+}
+
+.ag-cell-label-container .dropdown {
+  display: none;
+  margin-left: 0.25rem;
+}
+
+button,
+.ag-menu-option:not(.ag-menu-option-disabled) {
+  cursor: pointer;
+}
+
+.dropdown button {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.dropdown button {
+  background: url(../../../icons/light/more.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .dropdown button {
+  background: url(../../../icons/dark/more.svg);
+  background-size: 16px 16px;
+}
+
+.ag-header-active .ag-cell-label-container .dropdown,
+.ag-cell-label-container .dropdown.active {
+  display: flex;
+}
+
+.sort-icon-wrapper {
+  margin-left: auto;
+}
+
+.sort-icon-wrapper .icon,
+.sort-icon-wrapper .number {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.sort-icon-wrapper .icon.asc {
+  background: url(../../../icons/light/arrow-up.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .sort-icon-wrapper .icon.asc {
+  background: url(../../../icons/dark/arrow-up.svg);
+  background-size: 16px 16px;
+}
+
+.sort-icon-wrapper .icon.desc {
+  background: url(../../../icons/light/arrow-down.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .sort-icon-wrapper .icon.desc {
+  background: url(../../../icons/dark/arrow-down.svg);
+  background-size: 16px 16px;
+}
+
+.filter-wrapper .filter-input {
+  background: var(--vscode-input-background);
+  margin-bottom: 1rem;
+  position: relative;
+}
+.filter-wrapper .filter-input input {
+  color: var(--vscode-input-foreground);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: calc(32px + 2rem);
+  outline: 1px solid var(--vscode-editorGroup-border);
+}
+
+.filter-wrapper .filter-input input:focus {
+  outline: 1px solid var(--vscode-inputOption-activeBorder);
+}
+
+.filter-wrapper .filter-input button {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top: 0;
+  padding: 1rem;
+  border: 0;
+  right: 0;
+}
+
+.filter-wrapper .filter-input button.clear {
+  right: calc(16px + 1rem);
+}
+
+.vscode-dark .filter-wrapper .filter-input button.clear {
+  background: url(../../../icons/dark/close.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-dark .filter-wrapper .filter-input button.search {
+  background: url(../../../icons/dark/search.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-light .filter-wrapper .filter-input button.clear {
+  background: url(../../../icons/light/close.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-light .filter-wrapper .filter-input button.search {
+  background: url(../../../icons/light/search.svg) center no-repeat;
+  background-size: 16px 16px;
+}

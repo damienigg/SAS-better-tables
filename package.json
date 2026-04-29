@@ -1,0 +1,1538 @@
+{
+  "name": "better-table-viewer",
+  "displayName": "Better SAS Table Viewer",
+  "description": "Fork of the SAS VS Code extension with a redesigned table viewer modeled after Microsoft's mssql results grid.",
+  "version": "0.1.0",
+  "categories": [
+    "Programming Languages",
+    "Data Science",
+    "Machine Learning",
+    "Notebooks"
+  ],
+  "publisher": "local-fork",
+  "license": "Apache-2.0",
+  "icon": "icons/sas.png",
+  "engines": {
+    "vscode": "^1.89.0"
+  },
+  "activationEvents": [
+    "onWebviewPanel:SASResultPanel",
+    "onLanguage:sas",
+    "onNotebook:sas-notebook"
+  ],
+  "main": "./client/dist/node/extension",
+  "browser": "./client/dist/browser/extension",
+  "l10n": "./l10n",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "authentication": [
+      {
+        "id": "SAS",
+        "label": "SAS"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "sas",
+        "when": "!SAS.hideRunMenuItem",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "Task name"
+          },
+          "file": {
+            "type": "string",
+            "description": "The name of sas file to run"
+          },
+          "preamble": {
+            "type": "string",
+            "description": "Specify the preamble SAS code that you want automatically inserted before running code. "
+          },
+          "postamble": {
+            "type": "string",
+            "description": "Specify the postamble SAS code that you want automatically inserted after running code. "
+          }
+        }
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "date",
+        "superType": "numeric",
+        "description": "Date"
+      },
+      {
+        "id": "time",
+        "superType": "numeric",
+        "description": "Time"
+      },
+      {
+        "id": "dt",
+        "superType": "numeric",
+        "description": "DateTime"
+      },
+      {
+        "id": "format",
+        "superType": "decorator",
+        "description": "Format"
+      },
+      {
+        "id": "namelit",
+        "superType": "string",
+        "description": "Name literal"
+      },
+      {
+        "id": "numeric",
+        "superType": "number",
+        "description": "Numeric"
+      },
+      {
+        "id": "bitmask",
+        "superType": "string",
+        "description": "Bit mask"
+      },
+      {
+        "id": "hex",
+        "superType": "number",
+        "description": "Hexadecimal notation"
+      },
+      {
+        "id": "sep",
+        "superType": "operator",
+        "description": "Separator"
+      },
+      {
+        "id": "macro-sec-keyword",
+        "superType": "macro",
+        "description": "SAS Macro Section Keyword"
+      },
+      {
+        "id": "macro-ref",
+        "superType": "variable",
+        "description": "SAS Macro Reference"
+      },
+      {
+        "id": "macro-keyword",
+        "superType": "keyword",
+        "description": "SAS Macro Keyword"
+      },
+      {
+        "id": "macro-comment",
+        "superType": "comment",
+        "description": "SAS Macro Comment"
+      },
+      {
+        "id": "macro-keyword-param",
+        "superType": "parameter",
+        "description": "SAS Macro Keyword Parameter"
+      },
+      {
+        "id": "sec-keyword",
+        "superType": "function",
+        "description": "SAS Section keyword"
+      },
+      {
+        "id": "proc-name",
+        "superType": "function",
+        "description": "Name of the proc"
+      },
+      {
+        "id": "cards-data",
+        "superType": "parameter",
+        "description": "Card data"
+      }
+    ],
+    "configuration": [
+      {
+        "properties": {
+          "SAS.connectionProfiles": {
+            "order": 0,
+            "type": "object",
+            "description": "%configuration.SAS.connectionProfiles%",
+            "properties": {
+              "activeProfile": {
+                "order": 0,
+                "type": "string",
+                "description": "%configuration.SAS.connectionProfiles.activeProfile%",
+                "default": ""
+              },
+              "profiles": {
+                "order": 1,
+                "type": "object",
+                "description": "%configuration.SAS.connectionProfiles.profiles%",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "%configuration.SAS.connectionProfiles.profiles.name%",
+                  "required": [
+                    "connectionType"
+                  ],
+                  "properties": {
+                    "connectionType": {
+                      "type": "string",
+                      "default": "rest",
+                      "description": "%configuration.SAS.connectionProfiles.profiles.connectionType%",
+                      "enum": [
+                        "rest",
+                        "ssh",
+                        "com",
+                        "iom"
+                      ]
+                    },
+                    "sasOptions": {
+                      "type": "array",
+                      "default": [],
+                      "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "autoExec": {
+                      "type": "array",
+                      "default": [],
+                      "description": "%configuration.SAS.connectionProfiles.profiles.autoExec%",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "default": "line",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.type%",
+                            "enum": [
+                              "line",
+                              "file"
+                            ]
+                          }
+                        },
+                        "allOf": [
+                          {
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "line"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "line"
+                              ],
+                              "properties": {
+                                "line": {
+                                  "type": "string",
+                                  "default": "",
+                                  "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.line%"
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "file"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "filePath"
+                              ],
+                              "properties": {
+                                "filePath": {
+                                  "type": "string",
+                                  "default": "",
+                                  "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.filePath%"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "rest"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "endpoint"
+                        ],
+                        "properties": {
+                          "endpoint": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
+                          },
+                          "context": {
+                            "type": "string",
+                            "default": "SAS Job Execution compute context",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.context%"
+                          },
+                          "clientId": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientId%"
+                          },
+                          "clientSecret": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "SYSTEM"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "ssh"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "saspath",
+                          "username",
+                          "port"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.host%"
+                          },
+                          "saspath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.saspath%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 22,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          },
+                          "privateKeyFilePath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath%"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "iom"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "username",
+                          "port"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.host%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 8591,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          },
+                          "interopLibraryFolderPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.interopLibraryFolderPath%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "SYSTEM"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "com"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.host%"
+                          },
+                          "interopLibraryFolderPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.interopLibraryFolderPath%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "SYSTEM"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "SAS.userProvidedCertificates": {
+            "order": 1,
+            "type": "array",
+            "description": "%configuration.SAS.userProvidedCertificates%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "SAS.results.sideBySide": {
+            "order": 2,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.results.sideBySide%"
+          },
+          "SAS.results.singlePanel": {
+            "order": 3,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.results.singlePanel%"
+          },
+          "SAS.results.html.enabled": {
+            "order": 4,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.results.html.enabled%"
+          },
+          "SAS.results.html.style": {
+            "order": 5,
+            "type": "string",
+            "default": "(auto)",
+            "enum": [
+              "(auto)",
+              "(server default)",
+              "Aqua",
+              "Daisy",
+              "Dove",
+              "HighContrast",
+              "HighContrastLarge",
+              "HTMLBlue",
+              "HTMLEncore",
+              "Ignite",
+              "Illuminate",
+              "Journal",
+              "Journal2",
+              "Journal3",
+              "Marine",
+              "Midnight",
+              "Moonflower",
+              "Opal",
+              "Pearl",
+              "Sapphire"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.results.html.style.(auto)%",
+              "%configuration.SAS.results.html.style.(server default)%"
+            ],
+            "description": "%configuration.SAS.results.html.style%"
+          },
+          "SAS.results.html.custom.style": {
+            "type": "object",
+            "default": {},
+            "markdownDescription": "%configuration.SAS.results.html.custom.style%",
+            "properties": {
+              "light": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.light%"
+              },
+              "dark": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.dark%"
+              },
+              "highContrast": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.highContrast%"
+              },
+              "highContrastLight": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.highContrastLight%"
+              }
+            }
+          },
+          "SAS.problems.log.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.problems.log.enabled%"
+          },
+          "SAS.flowConversionMode": {
+            "order": 6,
+            "type": "string",
+            "default": "Swimlane",
+            "enum": [
+              "Swimlane",
+              "Node"
+            ],
+            "description": "%configuration.SAS.flowConversionMode%",
+            "enumDescriptions": [
+              "%configuration.SAS.flowConversionModeSwimlane%",
+              "%configuration.SAS.flowConversionModeNode%"
+            ]
+          },
+          "SAS.log.showOnExecutionStart": {
+            "order": 7,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionStart%"
+          },
+          "SAS.log.showOnExecutionFinish": {
+            "order": 8,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionFinish%"
+          },
+          "SAS.log.clearOnExecutionStart": {
+            "order": 9,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.clearOnExecutionStart%"
+          },
+          "SAS.notebook.export.includeLog": {
+            "order": 10,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.notebook.export.includeLog%"
+          }
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "[sas]": {
+        "editor.formatOnType": true,
+        "editor.formatOnPaste": true,
+        "editor.defaultFormatter": "SAS.sas-lsp"
+      }
+    },
+    "commands": [
+      {
+        "command": "SAS.run",
+        "title": "%commands.SAS.run%",
+        "icon": {
+          "light": "icons/light/submitSASCode.svg",
+          "dark": "icons/dark/submitSASCode.svg"
+        },
+        "enablement": "!SAS.running",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.runSelected",
+        "title": "%commands.SAS.runSelected%",
+        "icon": {
+          "light": "icons/light/submitSASCode.svg",
+          "dark": "icons/dark/submitSASCode.svg"
+        },
+        "enablement": "!SAS.running",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.runRegion",
+        "title": "%commands.SAS.runRegion%",
+        "icon": {
+          "light": "icons/light/submitSASCode.svg",
+          "dark": "icons/dark/submitSASCode.svg"
+        },
+        "enablement": "!SAS.running",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.close",
+        "title": "%commands.SAS.close%",
+        "icon": {
+          "light": "icons/light/connectorNodeIndicator.svg",
+          "dark": "icons/dark/connectorNodeIndicator.svg"
+        },
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.switchProfile",
+        "title": "%commands.SAS.switchProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addProfile",
+        "title": "%commands.SAS.addProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.deleteProfile",
+        "title": "%commands.SAS.deleteProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.updateProfile",
+        "title": "%commands.SAS.updateProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.authorize",
+        "title": "%commands.SAS.authorize%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.copyPath",
+        "title": "%commands.SAS.copyPath%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.deleteResource",
+        "title": "%commands.SAS.deleteResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.addFileResource",
+        "title": "%commands.SAS.addFileResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.addFolderResource",
+        "title": "%commands.SAS.addFolderResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.renameResource",
+        "title": "%commands.SAS.renameResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.restoreResource",
+        "title": "%commands.SAS.restoreResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.emptyRecycleBin",
+        "title": "%commands.SAS.emptyRecycleBin%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.addToFavorites",
+        "title": "%commands.SAS.addToFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.convertNotebookToFlow",
+        "title": "%commands.SAS.convertNotebookToFlow%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.removeFromFavorites",
+        "title": "%commands.SAS.removeFromFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.refreshContent",
+        "title": "%commands.SAS.refresh%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.content.collapseAllContent",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.content.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.copyPath",
+        "title": "%commands.SAS.copyPath%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.deleteResource",
+        "title": "%commands.SAS.deleteResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.addFileResource",
+        "title": "%commands.SAS.addFileResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.addFolderResource",
+        "title": "%commands.SAS.addFolderResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.renameResource",
+        "title": "%commands.SAS.renameResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.restoreResource",
+        "title": "%commands.SAS.restoreResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.emptyRecycleBin",
+        "title": "%commands.SAS.emptyRecycleBin%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.addToFavorites",
+        "title": "%commands.SAS.addToFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.convertNotebookToFlow",
+        "title": "%commands.SAS.convertNotebookToFlow%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.removeFromFavorites",
+        "title": "%commands.SAS.removeFromFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.refreshContent",
+        "title": "%commands.SAS.refresh%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.server.collapseAllContent",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.server.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.refreshLibraries",
+        "title": "%commands.SAS.refresh%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.collapseAllLibraries",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.deleteTable",
+        "title": "%commands.SAS.deleteTable%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.downloadTable",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.showTableProperties",
+        "title": "%commands.SAS.showTableProperties%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.notebook.new",
+        "shortTitle": "%commands.SAS.notebook.new.short%",
+        "title": "%commands.SAS.notebook.new%",
+        "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.notebook.export",
+        "title": "%commands.SAS.notebook.export%",
+        "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.notebook.saveOutput",
+        "title": "%commands.SAS.notebook.saveOutput%",
+        "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.file.new",
+        "shortTitle": "%commands.SAS.file.new.short%",
+        "title": "%commands.SAS.file.new%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.saveHTML",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.toggleLineComment",
+        "title": "%commands.SAS.toggleLineComment%",
+        "category": "SAS"
+      }
+    ],
+    "keybindings": [
+      {
+        "when": "editorFocus && (editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+        "command": "SAS.run",
+        "key": "f8"
+      },
+      {
+        "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+        "command": "SAS.runSelected",
+        "key": "f3"
+      },
+      {
+        "key": "ctrl+/",
+        "mac": "cmd+/",
+        "command": "SAS.toggleLineComment",
+        "when": "editorTextFocus && editorLangId == 'sas'"
+      },
+      {
+        "when": "focusedView == contentdataprovider",
+        "command": "SAS.content.deleteResource",
+        "key": "delete"
+      },
+      {
+        "when": "focusedView == serverdataprovider",
+        "command": "SAS.server.deleteResource",
+        "key": "delete"
+      }
+    ],
+    "menus": {
+      "webview/context": [
+        {
+          "command": "SAS.saveHTML",
+          "when": "webviewId =~ /SASResultPanel/"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "SAS.content.refreshContent",
+          "when": "view == contentdataprovider",
+          "group": "navigation@0"
+        },
+        {
+          "command": "SAS.content.collapseAllContent",
+          "when": "view == contentdataprovider",
+          "group": "navigation@1"
+        },
+        {
+          "command": "SAS.server.refreshContent",
+          "when": "view == serverdataprovider",
+          "group": "navigation@0"
+        },
+        {
+          "command": "SAS.server.collapseAllContent",
+          "when": "view == serverdataprovider",
+          "group": "navigation@1"
+        },
+        {
+          "command": "SAS.refreshLibraries",
+          "when": "view == librarydataprovider",
+          "group": "navigation@0"
+        },
+        {
+          "command": "SAS.collapseAllLibraries",
+          "when": "view == librarydataprovider",
+          "group": "navigation@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "SAS.content.convertNotebookToFlow",
+          "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
+          "group": "actionsgroup@0"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "SAS.deleteTable",
+          "when": "viewItem =~ /table-actionable/ && view == librarydataprovider",
+          "group": "delete@0"
+        },
+        {
+          "command": "SAS.downloadTable",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "group": "download@0"
+        },
+        {
+          "command": "SAS.showTableProperties",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "group": "properties@0"
+        },
+        {
+          "command": "SAS.content.addFolderResource",
+          "when": "viewItem =~ /createChild/ && view == contentdataprovider && !listMultiSelection",
+          "group": "addgroup@0"
+        },
+        {
+          "command": "SAS.content.addFileResource",
+          "when": "viewItem =~ /createChild/ && view == contentdataprovider && !listMultiSelection",
+          "group": "addgroup@1"
+        },
+        {
+          "command": "SAS.content.addToFavorites",
+          "when": "viewItem =~ /addToFavorites/ && view == contentdataprovider",
+          "group": "favoritesgroup@0"
+        },
+        {
+          "command": "SAS.content.removeFromFavorites",
+          "when": "viewItem =~ /removeFromFavorites/ && view == contentdataprovider",
+          "group": "favoritesgroup@1"
+        },
+        {
+          "command": "SAS.content.copyPath",
+          "when": "viewItem =~ /copyPath/ && view == contentdataprovider && !listMultiSelection",
+          "group": "copypathgroup@0"
+        },
+        {
+          "command": "SAS.content.renameResource",
+          "when": "viewItem =~ /update/ && view == contentdataprovider && !listMultiSelection",
+          "group": "delrenamegroup@0"
+        },
+        {
+          "command": "SAS.content.deleteResource",
+          "when": "viewItem =~ /delete/ && view == contentdataprovider",
+          "group": "delrenamegroup@1"
+        },
+        {
+          "command": "SAS.content.convertNotebookToFlow",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == contentdataprovider && !listMultiSelection",
+          "group": "actionsgroup@0"
+        },
+        {
+          "command": "SAS.content.restoreResource",
+          "when": "viewItem =~ /restore/ && view == contentdataprovider",
+          "group": "restoregroup@0"
+        },
+        {
+          "command": "SAS.content.emptyRecycleBin",
+          "when": "viewItem =~ /empty/ && view == contentdataprovider",
+          "group": "emptygroup@0"
+        },
+        {
+          "command": "SAS.content.downloadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
+          "group": "uploaddownloadgroup@0"
+        },
+        {
+          "command": "SAS.content.uploadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform == mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.content.uploadFileResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.content.uploadFolderResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.server.addFolderResource",
+          "when": "viewItem =~ /createChild/ && view == serverdataprovider",
+          "group": "addgroup@0"
+        },
+        {
+          "command": "SAS.server.addFileResource",
+          "when": "viewItem =~ /createChild/ && view == serverdataprovider",
+          "group": "addgroup@1"
+        },
+        {
+          "command": "SAS.server.addToFavorites",
+          "when": "viewItem =~ /addToFavorites/ && view == serverdataprovider",
+          "group": "favoritesgroup@0"
+        },
+        {
+          "command": "SAS.server.removeFromFavorites",
+          "when": "viewItem =~ /removeFromFavorites/ && view == serverdataprovider",
+          "group": "favoritesgroup@1"
+        },
+        {
+          "command": "SAS.server.copyPath",
+          "when": "viewItem =~ /copyPath/ && view == serverdataprovider",
+          "group": "copypathgroup@0"
+        },
+        {
+          "command": "SAS.server.renameResource",
+          "when": "viewItem =~ /update/ && view == serverdataprovider && !listMultiSelection",
+          "group": "delrenamegroup@0"
+        },
+        {
+          "command": "SAS.server.deleteResource",
+          "when": "viewItem =~ /delete/ && view == serverdataprovider",
+          "group": "delrenamegroup@1"
+        },
+        {
+          "command": "SAS.server.convertNotebookToFlow",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == serverdataprovider && SAS.connectionType != iom && SAS.connectionType != com ",
+          "group": "actionsgroup@0"
+        },
+        {
+          "command": "SAS.server.restoreResource",
+          "when": "viewItem =~ /restore/ && view == serverdataprovider",
+          "group": "restoregroup@0"
+        },
+        {
+          "command": "SAS.server.emptyRecycleBin",
+          "when": "viewItem =~ /empty/ && view == serverdataprovider",
+          "group": "emptygroup@0"
+        },
+        {
+          "command": "SAS.server.downloadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider",
+          "group": "uploaddownloadgroup@0"
+        },
+        {
+          "command": "SAS.server.uploadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform == mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.server.uploadFileResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.server.uploadFolderResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.runSelected"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.run",
+          "group": "navigation@2"
+        },
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.runSelected",
+          "group": "navigation@1"
+        },
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.runRegion",
+          "group": "navigation@3"
+        }
+      ],
+      "notebook/toolbar": [
+        {
+          "when": "notebookType == 'sas-notebook'",
+          "command": "SAS.notebook.export"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "SAS.notebook.saveOutput",
+          "when": "notebookType == 'sas-notebook' && notebookCellHasOutputs"
+        }
+      ],
+      "commandPalette": [
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.run"
+        },
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.runSelected"
+        },
+        {
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
+          "command": "SAS.runRegion"
+        },
+        {
+          "command": "SAS.authorize",
+          "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct"
+        },
+        {
+          "when": "false",
+          "command": "SAS.collapseAllLibraries"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.addFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.addFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.addToFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.collapseAllContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.convertNotebookToFlow"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.copyPath"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.emptyRecycleBin"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.refreshContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.removeFromFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.renameResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.restoreResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.uploadFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.uploadFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.deleteTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.notebook.export"
+        },
+        {
+          "when": "false",
+          "command": "SAS.notebook.saveOutput"
+        },
+        {
+          "when": "false",
+          "command": "SAS.refreshLibraries"
+        },
+        {
+          "when": "false",
+          "command": "SAS.saveHTML"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.addFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.addFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.addToFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.collapseAllContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.convertNotebookToFlow"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.copyPath"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.emptyRecycleBin"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.refreshContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.removeFromFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.renameResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.restoreResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.uploadFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.uploadFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.showTableProperties"
+        }
+      ],
+      "file/newFile": [
+        {
+          "command": "SAS.notebook.new",
+          "group": "notebook"
+        },
+        {
+          "command": "SAS.file.new",
+          "group": "file"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "sas",
+        "aliases": [
+          "SAS"
+        ],
+        "extensions": [
+          ".sas"
+        ],
+        "icon": {
+          "dark": "icons/dark/sasProgramFileDark.svg",
+          "light": "icons/light/sasProgramFileLight.svg"
+        },
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "sas-log"
+      }
+    ],
+    "grammars": [
+      {
+        "scopeName": "source.sassql",
+        "path": "./syntaxes/sassql.tmLanguage.json",
+        "injectTo": [
+          "source.sas"
+        ]
+      },
+      {
+        "language": "sas",
+        "scopeName": "source.sas",
+        "path": "./syntaxes/sas.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.python": "python",
+          "source.lua": "lua",
+          "source.sql": "sql",
+          "source.r": "r"
+        }
+      }
+    ],
+    "themes": [
+      {
+        "label": "%themes.SAS.light%",
+        "uiTheme": "vs",
+        "path": "./themes/sas-light-color-theme.json"
+      },
+      {
+        "label": "%themes.SAS.dark%",
+        "uiTheme": "vs-dark",
+        "path": "./themes/sas-dark-color-theme.json"
+      },
+      {
+        "label": "%themes.SAS.highContrast%",
+        "uiTheme": "hc-black",
+        "path": "./themes/sas-highcontrast-color-theme.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sas",
+        "path": "./snippets/proc-snippets.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sas-view-container",
+          "title": "SAS",
+          "icon": "icons/dark/sasIndicatorDark.svg"
+        }
+      ]
+    },
+    "views": {
+      "sas-view-container": [
+        {
+          "id": "contentdataprovider",
+          "name": "%views.SAS.explorer%",
+          "when": "SAS.authorized && SAS.connectionType == rest"
+        },
+        {
+          "id": "serverdataprovider",
+          "name": "%views.SAS.serverExplorer%",
+          "when": "(SAS.authorized || SAS.serverDisplayed) && SAS.serverEnabled"
+        },
+        {
+          "id": "librarydataprovider",
+          "name": "%views.SAS.libraries%",
+          "when": "((SAS.authorized || SAS.librariesDisplayed) && SAS.librariesEnabled) || SAS.connection.direct"
+        },
+        {
+          "id": "sas-content-get-started",
+          "name": "%views.SAS.signIn%",
+          "when": "(!(SAS.authorized || SAS.librariesDisplayed || SAS.serverDisplayed) && SAS.canSignIn) && !SAS.connection.direct"
+        },
+        {
+          "id": "sas-content-invalid-connection",
+          "name": "%views.SAS.signIn%",
+          "when": "!SAS.authorized && !SAS.canSignIn"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sas-content-get-started",
+        "contents": "%views.SAS.welcome%",
+        "enablement": "!SAS.authorizing"
+      },
+      {
+        "view": "sas-content-invalid-connection",
+        "contents": "%views.SAS.unsupportedConnection%"
+      }
+    ],
+    "notebooks": [
+      {
+        "type": "sas-notebook",
+        "displayName": "%notebooks.SAS.sasNotebook%",
+        "selector": [
+          {
+            "filenamePattern": "*.sasnb"
+          }
+        ]
+      }
+    ],
+    "notebookRenderer": [
+      {
+        "id": "sas-log-renderer",
+        "displayName": "%notebooks.SAS.logRenderer%",
+        "entrypoint": "./client/dist/notebook/LogRenderer.js",
+        "mimeTypes": [
+          "application/vnd.sas.compute.log.lines"
+        ]
+      },
+      {
+        "id": "sas-html-renderer",
+        "displayName": "%notebooks.SAS.htmlRenderer%",
+        "entrypoint": "./client/dist/notebook/HTMLRenderer.js",
+        "mimeTypes": [
+          "application/vnd.sas.ods.html5"
+        ]
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sassoftware/vscode-sas-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/sassoftware/vscode-sas-extension/issues"
+  },
+  "homepage": "https://www.sas.com",
+  "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
+  "scripts": {
+    "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
+    "lint": "node node_modules/eslint/bin/eslint.js \"./client/src/**/*.ts\" \"./client/src/**/*.tsx\" \"./server/src/**/*.ts\"",
+    "compile": "node ./tools/build.mjs",
+    "watch": "node ./tools/build.mjs dev",
+    "compile-browser": "webpack --mode production",
+    "watch-browser": "webpack --watch",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "pretest": "npm run compile && tsc -p ./client",
+    "test-client": "node ./client/out/test/runTest.js",
+    "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
+    "test": "npm run test-server && npm run test-client",
+    "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "copyright:check": "node ./tools/check-copyright.mjs",
+    "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
+  },
+  "devDependencies": {
+    "@eslint/compat": "2.0.3",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.0.10",
+    "@types/sinon": "^21.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "@vscode/l10n-dev": "^0.0.35",
+    "buffer": "6.0.3",
+    "chai": "^4.4.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.27.3",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "glob": "^13.0.3",
+    "mocha": "^11.7.5",
+    "papaparse": "^5.5.3",
+    "path-browserify": "^1.0.1",
+    "prettier": "^3.8.1",
+    "proxyquire": "^2.1.3",
+    "sinon": "^21.0.2",
+    "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
+    "ts-sinon": "^2.0.2",
+    "typescript": "^5.5.3",
+    "webpack": "^5.105.4",
+    "webpack-cli": "^7.0.2"
+  }
+}
