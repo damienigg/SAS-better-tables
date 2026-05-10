@@ -5,7 +5,7 @@
 // supported formats. Returns ready-to-write strings.
 
 import type { CellRange, ColumnMeta, CopyFormat } from "./protocol";
-import { iterCells, bounds } from "./selection";
+import { iterCells, bounds, cellKey } from "./selection";
 
 interface CopySource {
   selection: CellRange[];
@@ -34,16 +34,16 @@ function materialise(src: CopySource): RowMatrix {
 
   // Pre-build a sparse map of selected cells so we know which fall inside
   // a non-rectangular union.
-  const selected = new Set<number>();
+  const selected = new Set<string>();
   for (const cell of iterCells(src.selection)) {
-    selected.add(cell.row * 1_000_000 + cell.col);
+    selected.add(cellKey(cell.row, cell.col));
   }
 
   for (let r = b.fromRow; r <= b.toRow; r++) {
     const row: Array<string | null> = [];
     let any = false;
     for (let c = b.fromCol; c <= b.toCol; c++) {
-      if (!selected.has(r * 1_000_000 + c)) {
+      if (!selected.has(cellKey(r, c))) {
         row.push(null);
         continue;
       }
@@ -70,10 +70,21 @@ function joinCsvRow(cells: Array<string | null>): string {
   return cells.map((c) => (c === null ? "" : csvEscape(c))).join(",");
 }
 
+/** Tab-separated row. Cells containing tabs, CR/LF, or double quotes are
+ *  wrapped in double quotes with internal quotes doubled — matching the
+ *  way mssql exports TSV. The naive approach (replacing the offending
+ *  characters with spaces) was lossy and silently corrupted multi-line
+ *  text content on copy. */
+function tsvEscape(v: string): string {
+  if (v.indexOf("\t") === -1 && v.indexOf("\r") === -1 &&
+      v.indexOf("\n") === -1 && v.indexOf('"') === -1) {
+    return v;
+  }
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
 function joinTabRow(cells: Array<string | null>): string {
-  return cells
-    .map((c) => (c === null ? "" : c.replace(/[\t\r\n]/g, " ")))
-    .join("\t");
+  return cells.map((c) => (c === null ? "" : tsvEscape(c))).join("\t");
 }
 
 function headerRow(cols: ColumnMeta[]): string[] {

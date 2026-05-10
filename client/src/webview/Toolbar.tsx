@@ -1,7 +1,7 @@
 // Copyright © 2026 Damien Iggiotti
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { send } from "./messaging";
 import { useStore } from "./store";
@@ -16,26 +16,48 @@ interface MenuProps {
 
 function DropMenu({ label, children }: MenuProps) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Close when the user clicks outside or hits Escape. Using a document
+  // click listener instead of the trigger's onBlur avoids the
+  // mousedown→blur→click race that closed the menu before the item's
+  // click could land in some browsers.
+  useEffect(() => {
+    if (!open) {return;}
+    const onDoc = (e: MouseEvent) => {
+      if (
+        wrapRef.current &&
+        e.target instanceof Node &&
+        !wrapRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {setOpen(false);}
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="btv-menu">
+    <div className="btv-menu" ref={wrapRef}>
       <button
         type="button"
         className="btv-btn btv-menu-trigger"
         onClick={() => setOpen((b) => !b)}
-        onBlur={(e) => {
-          // Close when focus leaves the menu entirely (not when moving to a
-          // child item). `relatedTarget` is the new focus owner.
-          const parent = e.currentTarget.parentElement;
-          const next = e.relatedTarget;
-          if (!parent || !(next instanceof Node) || !parent.contains(next)) {
-            setOpen(false);
-          }
-        }}
       >
         {label} <span className="btv-caret">▾</span>
       </button>
       {open && (
-        <div className="btv-menu-list" onMouseDown={(e) => e.preventDefault()}>
+        <div
+          className="btv-menu-list"
+          onClick={() => setOpen(false)}
+        >
           {children}
         </div>
       )}

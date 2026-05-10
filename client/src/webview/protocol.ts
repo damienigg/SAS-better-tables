@@ -19,6 +19,12 @@ export interface SortSpec {
  * (`values`) for fast in-memory inclusion checks, or a free-form SAS
  * WHERE-clause fragment (`expr`). At most one of the two is used; the
  * webview prefers `values` when both are present.
+ *
+ * NOTE: `expr` is treated as trusted and concatenated into the WHERE
+ * clause sent to the SAS server with no sanitisation. The webview
+ * surfaces it as an explicit "WHERE expression" input so the user
+ * understands they are writing SAS — do not pipe arbitrary inputs into
+ * this slot.
  */
 export interface ColumnFilter {
   colId: string;

@@ -27,10 +27,32 @@ export function send(msg: WebviewMessage): void {
 
 export type HostListener = (msg: HostMessage) => void;
 
+// Single window listener feeds all subscribers. Previously the pump and
+// the App component each registered their own `window` listener, which
+// meant the same incoming message was decoded twice. This bus deduplicates
+// dispatch and centralises the event surface for tests.
+const listeners = new Set<HostListener>();
+let installed = false;
+function install(): void {
+  if (installed) {return;}
+  installed = true;
+  window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
+    for (const l of listeners) {
+      try {
+        l(event.data);
+      } catch {
+        // A faulty listener must not block the rest of the dispatch.
+      }
+    }
+  });
+}
+
 export function onHostMessage(listener: HostListener): () => void {
-  const handler = (event: MessageEvent<HostMessage>) => listener(event.data);
-  window.addEventListener("message", handler);
-  return () => window.removeEventListener("message", handler);
+  install();
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 /**

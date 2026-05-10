@@ -21,6 +21,7 @@ interface Props {
 export function FilterPopup({ column, current, onClose }: Props) {
   const setFilter = useStore((s) => s.setFilter);
   const rows = useStore((s) => s.rows);
+  const rowCount = useStore((s) => s.rowCount);
   const columns = useStore((s) => s.columns);
   const colIdx = columns.findIndex((c) => c.id === column.id);
 
@@ -34,6 +35,13 @@ export function FilterPopup({ column, current, onClose }: Props) {
     });
     return [...seen].sort((a, b) => a.localeCompare(b));
   }, [rows, colIdx]);
+
+  // The checklist is built from the local row cache, which only holds the
+  // pages that have been scrolled past. When some rows are still
+  // un-fetched the list is necessarily a sample, not the full distinct
+  // set — surface that so the user can fall back to the WHERE expression
+  // slot for completeness.
+  const isSample = rows.size < rowCount;
 
   const [search, setSearch] = useState("");
   const [checked, setChecked] = useState<Set<string>>(
@@ -124,6 +132,11 @@ export function FilterPopup({ column, current, onClose }: Props) {
           </label>
         ))}
       </div>
+      {isSample && (
+        <div className="btv-filter-warn">
+          {l10n("Showing values from loaded rows only — use the WHERE expression below to filter against the full table.")}
+        </div>
+      )}
       <div className="btv-filter-section">
         <label className="btv-filter-label">
           {l10n("WHERE expression")}

@@ -12,10 +12,12 @@ interface Props {
   column: ColumnMeta;
 }
 
-function nextSortDir(spec: SortSpec | undefined): SortSpec | null {
-  if (!spec) {return { colId: "", dir: "asc" };}
-  if (spec.dir === "asc") {return { ...spec, dir: "desc" };}
-  return null; // third click clears
+type SortDir = SortSpec["dir"];
+/** mssql-style three-state sort cycle: asc → desc → off. */
+function nextSortDir(current: SortDir | undefined): SortDir | null {
+  if (current === undefined) {return "asc";}
+  if (current === "asc") {return "desc";}
+  return null;
 }
 
 export function HeaderCell({ column }: Props) {
@@ -29,13 +31,13 @@ export function HeaderCell({ column }: Props) {
 
   const onSortClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const next = nextSortDir(current);
+    const next = nextSortDir(current?.dir);
     if (next === null) {
       // Remove this column from the sort.
       setSort(sort.filter((s) => s.colId !== column.id));
     } else {
       // Single-column sort, like mssql.
-      setSort([{ colId: column.id, dir: next.dir }]);
+      setSort([{ colId: column.id, dir: next }]);
     }
   };
 

@@ -16,7 +16,8 @@
 
 import { Uri, env, l10n, window, workspace } from "vscode";
 
-import { createWriteStream } from "fs";
+import { createWriteStream, type WriteStream } from "fs";
+import { unlink } from "fs/promises";
 import path from "path";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
@@ -89,6 +90,10 @@ class DataViewer extends WebView {
       "(empty)": l10n.t("(empty)"),
       Search: l10n.t("Search"),
       Selected: l10n.t("Selected"),
+      "Showing values from loaded rows only — use the WHERE expression below to filter against the full table.":
+        l10n.t(
+          "Showing values from loaded rows only — use the WHERE expression below to filter against the full table.",
+        ),
       "Selection as CSV": l10n.t("Selection as CSV"),
       "Selection as Excel": l10n.t("Selection as Excel"),
       "Selection as JSON": l10n.t("Selection as JSON"),
@@ -241,24 +246,92 @@ class DataViewer extends WebView {
     const inSelection = selection
       ? buildSelectionPredicate(selection)
       : () => true;
-    let rowIdx = -1;
 
-    if (format === "csv") {
-      const stream = createWriteStream(target.fsPath);
-      stream.write(cols.map((c) => csvCell(c.label || c.name)).join(","));
-      stream.write("\n");
+    // Single try/catch around the entire export: if anything fails we
+    // delete the partial file and re-throw so processMessage can post the
+    // error to the webview. Without this a mid-stream adapter failure left
+    // a half-written file with no signal to the user.
+    try {
+      if (format === "csv") {
+        await this.exportCsv(
+          target.fsPath,
+          cols,
+          sortModel,
+          query,
+          scope,
+          inSelection,
+        );
+      } else if (format === "json") {
+        await this.exportJson(
+          target.fsPath,
+          cols,
+          sortModel,
+          query,
+          scope,
+          selection,
+          inSelection,
+        );
+      } else if (format === "xlsx") {
+        await this.exportXlsx(
+          target.fsPath,
+          cols,
+          sortModel,
+          query,
+          scope,
+          selection,
+          inSelection,
+        );
+      }
+    } catch (err) {
+      try {
+        await unlink(target.fsPath);
+      } catch {
+        // partial file may not exist (failed before first write); ignore
+      }
+      throw err;
+    }
+  }
+
+  private async exportCsv(
+    fsPath: string,
+    cols: ColumnMeta[],
+    sortModel: SortModel[],
+    query: TableQuery | undefined,
+    scope: ExportScope,
+    inSelection: (row: number) => boolean,
+  ): Promise<void> {
+    const stream = createWriteStream(fsPath);
+    let rowIdx = -1;
+    try {
+      await writeChunk(
+        stream,
+        cols.map((c) => csvCell(c.label || c.name)).join(",") + "\n",
+      );
       for await (const cells of this.iterAllRows(sortModel, query)) {
         rowIdx++;
         if (scope === "selection" && !inSelection(rowIdx)) {continue;}
         const out: (string | null)[] = cols.map((_c, i) => cells[i] ?? null);
-        stream.write(out.map(csvCell).join(","));
-        stream.write("\n");
+        await writeChunk(stream, out.map(csvCell).join(",") + "\n");
       }
-      stream.end();
-    } else if (format === "json") {
-      const stream = createWriteStream(target.fsPath);
-      stream.write("[\n");
-      let first = true;
+    } finally {
+      await endStream(stream);
+    }
+  }
+
+  private async exportJson(
+    fsPath: string,
+    cols: ColumnMeta[],
+    sortModel: SortModel[],
+    query: TableQuery | undefined,
+    scope: ExportScope,
+    selection: CellRange[] | undefined,
+    inSelection: (row: number) => boolean,
+  ): Promise<void> {
+    const stream = createWriteStream(fsPath);
+    let rowIdx = -1;
+    let first = true;
+    try {
+      await writeChunk(stream, "[\n");
       for await (const cells of this.iterAllRows(sortModel, query)) {
         rowIdx++;
         if (scope === "selection" && !inSelection(rowIdx)) {continue;}
@@ -273,37 +346,49 @@ class DataViewer extends WebView {
           }
           obj[cols[i].name] = cells[i] ?? "";
         }
-        if (!first) {stream.write(",\n");}
-        stream.write("  " + JSON.stringify(obj));
+        if (!first) {await writeChunk(stream, ",\n");}
+        await writeChunk(stream, "  " + JSON.stringify(obj));
         first = false;
       }
-      stream.write("\n]\n");
-      stream.end();
-    } else if (format === "xlsx") {
-      // Lazy import so we don't load exceljs unless someone exports excel.
-      const ExcelJS = await import("exceljs");
-      const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet("data");
-      ws.addRow(cols.map((c) => c.label || c.name));
-      for await (const cells of this.iterAllRows(sortModel, query)) {
-        rowIdx++;
-        if (scope === "selection" && !inSelection(rowIdx)) {continue;}
-        const out: (string | null)[] = [];
-        for (let i = 0; i < cols.length; i++) {
-          if (
-            scope === "selection" &&
-            selection &&
-            !inSelectionAtCell(selection, rowIdx, i)
-          ) {
-            out.push(null);
-          } else {
-            out.push(cells[i] ?? null);
-          }
-        }
-        ws.addRow(out);
-      }
-      await wb.xlsx.writeFile(target.fsPath);
+      await writeChunk(stream, "\n]\n");
+    } finally {
+      await endStream(stream);
     }
+  }
+
+  private async exportXlsx(
+    fsPath: string,
+    cols: ColumnMeta[],
+    sortModel: SortModel[],
+    query: TableQuery | undefined,
+    scope: ExportScope,
+    selection: CellRange[] | undefined,
+    inSelection: (row: number) => boolean,
+  ): Promise<void> {
+    // Lazy import so we don't load exceljs unless someone exports excel.
+    const ExcelJS = await import("exceljs");
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("data");
+    ws.addRow(cols.map((c) => c.label || c.name));
+    let rowIdx = -1;
+    for await (const cells of this.iterAllRows(sortModel, query)) {
+      rowIdx++;
+      if (scope === "selection" && !inSelection(rowIdx)) {continue;}
+      const out: (string | null)[] = [];
+      for (let i = 0; i < cols.length; i++) {
+        if (
+          scope === "selection" &&
+          selection &&
+          !inSelectionAtCell(selection, rowIdx, i)
+        ) {
+          out.push(null);
+        } else {
+          out.push(cells[i] ?? null);
+        }
+      }
+      ws.addRow(out);
+    }
+    await wb.xlsx.writeFile(fsPath);
   }
 
   private async *iterAllRows(
@@ -386,6 +471,35 @@ function combineFilters(filters: ColumnFilter[]): TableQuery | undefined {
     }
   }
   return parts.length === 0 ? undefined : { filterValue: parts.join(" and ") };
+}
+
+/** Write a chunk and wait for `drain` if the stream signals backpressure.
+ *  Without this, large exports balloon node's internal buffer and can OOM
+ *  on tables with millions of rows. */
+function writeChunk(stream: WriteStream, chunk: string): Promise<void> {
+  if (stream.write(chunk)) {return Promise.resolve();}
+  return new Promise<void>((resolve, reject) => {
+    const onDrain = () => {
+      stream.removeListener("error", onError);
+      resolve();
+    };
+    const onError = (err: Error) => {
+      stream.removeListener("drain", onDrain);
+      reject(err);
+    };
+    stream.once("drain", onDrain);
+    stream.once("error", onError);
+  });
+}
+
+/** Promisified `stream.end()`. Resolves on close, rejects on error.
+ *  Calling twice is safe — node ignores end() after the stream is closed. */
+function endStream(stream: WriteStream): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (stream.closed) {resolve(); return;}
+    stream.once("error", reject);
+    stream.end(() => resolve());
+  });
 }
 
 function csvCell(v: string | null | undefined): string {

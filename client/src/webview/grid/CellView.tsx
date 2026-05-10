@@ -15,10 +15,17 @@ interface Props {
   row: number;
   col: number;
   kind: ColumnKind;
-  value: string | null | undefined;
 }
 
-export function CellView({ row, col, kind, value }: Props) {
+export function CellView({ row, col, kind }: Props) {
+  // Per-cell selectors: zustand re-renders only when this cell's specific
+  // value or selection state changes. react-data-grid virtualises rendering
+  // so only viewport cells subscribe — the cost stays bounded by what's
+  // visible, not by total row count.
+  const value = useStore((s) => {
+    const r = s.rows.get(row);
+    return r ? r[col] : undefined;
+  });
   const selected = useStore((s) => containsCell(s.selection, row, col));
   const v = value === undefined ? null : value;
   const { text, isNull, truncated } = displayValue(v);

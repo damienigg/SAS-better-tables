@@ -70,6 +70,16 @@ export abstract class WebView {
       )
       .join("");
 
+    // The l10n bundle ships as a body attribute. JSON values can contain
+    // any of `& ' " < >`, so we HTML-escape the serialised JSON before
+    // embedding it; `dataset.l10n` returns the decoded string which is
+    // again valid JSON. Without this, translations like the French
+    // "Erreur d'exécution" broke out of the single-quoted attribute.
+    const l10nJson = JSON.stringify(
+      this.l10nMessages ? this.l10nMessages() : {},
+    );
+    const l10nAttr = escapeHtmlAttr(l10nJson);
+
     this.panel.webview.html = `<!DOCTYPE html>
       <html lang="en">
         <head>
@@ -81,7 +91,7 @@ export abstract class WebView {
           ${styles}
           <title>${this.title}</title>
         </head>
-        <body data-l10n='${JSON.stringify(this.l10nMessages ? this.l10nMessages() : {})}'>
+        <body data-l10n="${l10nAttr}">
           ${this.body()}
           ${scripts}
         </body>
@@ -124,4 +134,13 @@ export abstract class WebView {
       Uri.joinPath(extensionUri, "client", "dist", "webview", name),
     );
   }
+}
+
+function escapeHtmlAttr(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }

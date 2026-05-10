@@ -107,6 +107,11 @@ export const useStore = create<State & Actions>((set) => ({
       generation: 1,
       selection: [],
       selectionAnchor: null,
+      // Re-init means a fresh session: clear any inherited spinner or
+      // error toast left over from the previous panel state.
+      loading: false,
+      error: null,
+      cellDetail: null,
     }),
 
   applyRows: (start, rows, rowCount) =>

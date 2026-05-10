@@ -30,7 +30,6 @@ import { CellView } from "./CellView";
 
 interface Row {
   __index: number;
-  __cells: Record<string, string | null>;
 }
 
 const ROW_HEIGHT = 28;
@@ -40,29 +39,24 @@ const ROWNO_KEY = "__rowno";
 export function Grid() {
   const columns = useStore((s) => s.columns);
   const rowCount = useStore((s) => s.rowCount);
-  const rowsMap = useStore((s) => s.rows);
   const selection = useStore((s) => s.selection);
   const setSelection = useStore((s) => s.setSelection);
   const setAnchor = useStore((s) => s.setAnchor);
   const anchor = useStore((s) => s.selectionAnchor);
   const setCellDetail = useStore((s) => s.setCellDetail);
 
-  // Build the rows array. We materialise placeholders for absent rows so
-  // react-data-grid sees a contiguous list and can virtualise correctly.
-  // Filtering is applied server-side, so `rowCount` already reflects the
-  // post-filter total and array index equals data-row index.
+  // react-data-grid needs a contiguous rows array to virtualise; we hand it
+  // skeletons that carry only the absolute row index. CellView then reads
+  // its own value from the store via a scalar selector — that way a page
+  // arrival re-renders only the cells whose value actually changed instead
+  // of rebuilding rowCount × columns dictionaries.
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = new Array(rowCount);
     for (let i = 0; i < rowCount; i++) {
-      const cached = rowsMap.get(i);
-      const cells: Record<string, string | null> = {};
-      for (let c = 0; c < columns.length; c++) {
-        cells[columns[c].id] = cached ? cached[c] : null;
-      }
-      out[i] = { __index: i, __cells: cells };
+      out[i] = { __index: i };
     }
     return out;
-  }, [columns, rowCount, rowsMap]);
+  }, [rowCount]);
 
   const gridColumns = useMemo<Column<Row>[]>(() => {
     const cols: Column<Row>[] = [
@@ -88,12 +82,7 @@ export function Grid() {
         cellClass: "btv-data-cell",
         renderHeaderCell: () => <HeaderCell column={c} />,
         renderCell: ({ row }) => (
-          <CellView
-            row={row.__index}
-            col={dataColIdx}
-            kind={c.kind}
-            value={row.__cells[c.id]}
-          />
+          <CellView row={row.__index} col={dataColIdx} kind={c.kind} />
         ),
       });
     });

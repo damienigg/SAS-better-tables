@@ -58,18 +58,25 @@ export function toggleCell(
   return [...ranges, { fromRow: row, toRow: row, fromCol: col, toCol: col }];
 }
 
-/** All (row, col) pairs covered by `ranges`, ordered row-major. Caller
- *  should guard against pathologically huge selections. */
-export function* iterCells(
+/** Stable string key for a cell coordinate. Used to dedupe across
+ *  overlapping selection rectangles. A pipe is fine — column indices and
+ *  row indices are non-negative integers. */
+export function cellKey(row: number, col: number): string {
+  return row + "|" + col;
+}
+
+/** All (row, col) pairs covered by `ranges`, ordered row-major, with no
+ *  duplicates from overlapping rectangles. Caller should guard against
+ *  pathologically huge selections. */
+export function iterCells(
   ranges: CellRange[],
-): Generator<{ row: number; col: number }> {
-  // Materialise to a sorted, de-duplicated set keyed by `row*1e9+col`.
-  const seen = new Set<number>();
+): Array<{ row: number; col: number }> {
+  const seen = new Set<string>();
   const cells: Array<{ row: number; col: number }> = [];
   for (const r of ranges) {
     for (let row = r.fromRow; row <= r.toRow; row++) {
       for (let col = r.fromCol; col <= r.toCol; col++) {
-        const key = row * 1_000_000 + col;
+        const key = cellKey(row, col);
         if (seen.has(key)) {continue;}
         seen.add(key);
         cells.push({ row, col });
@@ -77,7 +84,7 @@ export function* iterCells(
     }
   }
   cells.sort((a, b) => (a.row - b.row) || (a.col - b.col));
-  for (const c of cells) {yield c;}
+  return cells;
 }
 
 export function cellCount(ranges: CellRange[]): number {

@@ -5,13 +5,15 @@
 // dropping responses from older generations. One generation per
 // sort/filter epoch.
 
-import { send, nextReqId } from "./messaging";
-import type { HostMessage } from "./protocol";
+import { send, nextReqId, onHostMessage } from "./messaging";
 import { useStore } from "./store";
 
 interface PendingRequest {
   reqId: number;
   generation: number;
+  /** The cache page this request was meant to fill. Tracked so error
+   *  responses can free the slot for retry. */
+  page: number;
 }
 
 const pending = new Map<number, PendingRequest>();
@@ -37,7 +39,7 @@ export function ensureRange(startRow: number, endRow: number): void {
     const start = p * pageSize;
     const end = Math.min(rowCount - 1, start + pageSize - 1);
     const reqId = nextReqId();
-    pending.set(reqId, { reqId, generation });
+    pending.set(reqId, { reqId, generation, page: p });
     s.markRequested([p]);
     send({
       kind: "rows-req",
@@ -52,8 +54,7 @@ export function ensureRange(startRow: number, endRow: number): void {
 
 /** Hook the pump to incoming host messages. Returns a teardown fn. */
 export function bindPump(): () => void {
-  const handler = (event: MessageEvent<HostMessage>) => {
-    const msg = event.data;
+  return onHostMessage((msg) => {
     if (msg.kind === "rows-resp") {
       const tracked = pending.get(msg.reqId);
       pending.delete(msg.reqId);
@@ -63,20 +64,23 @@ export function bindPump(): () => void {
       if (tracked.generation !== cur.generation) {return;}
       cur.applyRows(msg.start, msg.rows, msg.rowCount);
     } else if (msg.kind === "error") {
-      useStore.getState().setError(msg.message);
       if (msg.reqId !== undefined) {
-        // Free the request slot so the page can be retried.
+        const tracked = pending.get(msg.reqId);
         pending.delete(msg.reqId);
-        useStore.setState((s) => {
-          // Best-effort: don't know which page failed without the req map,
-          // so just bump the generation to force a refetch on next scroll.
-          return s;
-        });
+        // Only release the page slot if this error belongs to the current
+        // generation. A stale-generation error refers to a page that's
+        // already been invalidated; leaving requestedPages alone is safe.
+        if (tracked && tracked.generation === useStore.getState().generation) {
+          useStore.setState((s) => {
+            const next = new Set(s.requestedPages);
+            next.delete(tracked.page);
+            return { requestedPages: next };
+          });
+        }
       }
+      useStore.getState().setError(msg.message);
     }
-  };
-  window.addEventListener("message", handler);
-  return () => window.removeEventListener("message", handler);
+  });
 }
 
 /** Forget all in-flight requests. Call when re-initialising. */
