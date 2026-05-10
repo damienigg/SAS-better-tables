@@ -19,14 +19,16 @@ import DataGrid, {
 import { send } from "../messaging";
 import { ensureRange } from "../pump";
 import { useStore } from "../store";
-import { buildCopyText } from "../copy";
-import {
-  rectFromTo,
-  singleCell,
-  toggleCell,
-} from "../selection";
 import { HeaderCell } from "./HeaderCell";
 import { CellView } from "./CellView";
+import {
+  buildCopyShortcutMessage,
+  buildSelectAll,
+  isCopyShortcut,
+  isSelectAllShortcut,
+  resolveCellClick,
+  visibleRange,
+} from "./gridHandlers";
 
 interface Row {
   __index: number;
@@ -89,32 +91,25 @@ export function Grid() {
     return cols;
   }, [columns]);
 
-  // Selection coordinates use *data* column indices (i.e. row-number col is
-  // excluded). react-data-grid's column.idx counts the row-number col, so
-  // subtract one when translating.
+  // Selection coordinates use *data* column indices (i.e. row-number col
+  // is excluded). react-data-grid's column.idx counts the row-number col,
+  // so we subtract one when translating to data-row coordinates. The
+  // actual decision of WHICH selection rectangle to produce lives in
+  // `resolveCellClick` so it can be unit-tested without rendering.
   const onCellClick = useCallback(
     (args: CellClickArgs<Row>, event: CellMouseEvent) => {
-      if (args.column.key === ROWNO_KEY) {
-        // Clicking the row number selects the entire row.
-        const r = args.row.__index;
-        setSelection([
-          { fromRow: r, toRow: r, fromCol: 0, toCol: columns.length - 1 },
-        ]);
-        setAnchor({ row: r, col: 0 });
-        return;
-      }
-      const row = args.row.__index;
-      const col = args.column.idx - 1;
-
-      if (event.shiftKey && anchor) {
-        setSelection([rectFromTo(anchor, { row, col })]);
-      } else if (event.ctrlKey || event.metaKey) {
-        setSelection(toggleCell(selection, row, col));
-        setAnchor({ row, col });
-      } else {
-        setSelection(singleCell(row, col));
-        setAnchor({ row, col });
-      }
+      const result = resolveCellClick({
+        row: args.row.__index,
+        col: args.column.idx - 1,
+        isRowGutter: args.column.key === ROWNO_KEY,
+        shift: event.shiftKey,
+        ctrlOrMeta: event.ctrlKey || event.metaKey,
+        columnCount: columns.length,
+        selection,
+        anchor,
+      });
+      setSelection(result.selection);
+      setAnchor(result.anchor);
     },
     [anchor, columns.length, selection, setAnchor, setSelection],
   );
@@ -130,18 +125,18 @@ export function Grid() {
     [setCellDetail],
   );
 
-  // Scroll-driven prefetch. We compute the visible row band from the
-  // scroll container and pre-load a buffer either side.
+  // Scroll-driven prefetch. The geometry math lives in `visibleRange`
+  // so it can be unit-tested independently of the scroll event shape.
   const onScroll = useCallback(
     (event: React.UIEvent<HTMLDivElement>) => {
       const el = event.currentTarget;
-      const first = Math.floor(el.scrollTop / ROW_HEIGHT);
-      const visible = Math.ceil(el.clientHeight / ROW_HEIGHT);
-      const buffer = visible; // pre-load one screenful either side
-      ensureRange(
-        Math.max(0, first - buffer),
-        Math.min(rowCount - 1, first + visible + buffer),
+      const { from, to } = visibleRange(
+        el.scrollTop,
+        el.clientHeight,
+        ROW_HEIGHT,
+        rowCount,
       );
+      ensureRange(from, to);
     },
     [rowCount],
   );
@@ -152,38 +147,30 @@ export function Grid() {
   }, [rowCount]);
 
   // Ctrl/Cmd+C: copy the current selection in mssql's default format —
-  // tab-separated cells with no headers.
+  // tab-separated cells with no headers (Shift adds the header row).
+  // Ctrl/Cmd+A: select every cell.
+  // Both shortcuts use pure helpers for the actual decision, so the
+  // grid component is purely glue.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "c" || e.key === "C") &&
-        !e.altKey
-      ) {
+      if (isCopyShortcut(e)) {
         const sel = useStore.getState().selection;
-        if (sel.length === 0) {return;}
         const cols = useStore.getState().columns;
         const map = useStore.getState().rows;
-        const text = buildCopyText(e.shiftKey ? "with-headers" : "plain", {
+        const msg = buildCopyShortcutMessage({
           selection: sel,
           columns: cols,
           getCell: (r, c) => map.get(r)?.[c] ?? undefined,
+          withHeaders: e.shiftKey,
         });
-        send({ kind: "copy", format: "plain", text });
-        e.preventDefault();
-      } else if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "a" || e.key === "A")
-      ) {
-        if (rowCount > 0 && columns.length > 0) {
-          setSelection([
-            {
-              fromRow: 0,
-              toRow: rowCount - 1,
-              fromCol: 0,
-              toCol: columns.length - 1,
-            },
-          ]);
+        if (msg) {
+          send(msg);
+          e.preventDefault();
+        }
+      } else if (isSelectAllShortcut(e)) {
+        const sel = buildSelectAll(rowCount, columns.length);
+        if (sel) {
+          setSelection(sel);
           setAnchor({ row: 0, col: 0 });
           e.preventDefault();
         }

@@ -8,8 +8,6 @@ import { l10n, window } from "vscode";
 
 import * as path from "path";
 
-import ExcelJS from "exceljs";
-
 import { InMemorySource } from "./inMemorySource";
 import { inferColumns } from "./typeInfer";
 
@@ -21,6 +19,7 @@ export async function xlsxSource(
   fsPath: string,
   uid: string,
 ): Promise<InMemorySource | undefined> {
+  const ExcelJS = await import("exceljs");
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(fsPath);
 

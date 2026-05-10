@@ -41,8 +41,14 @@ import { csvSource } from "./csvSource";
 import { sas7bdatSource } from "./sas7bdatSource";
 import { xlsxSource } from "./xlsxSource";
 
-/** Extensions we recognise. */
-const SUPPORTED = new Set([".csv", ".tsv", ".xlsx", ".sas7bdat"]);
+/** Extensions we recognise. Exported so the package.json consistency
+ *  test can verify the explorer-context menu glob keeps in lockstep. */
+export const SUPPORTED = new Set([".csv", ".tsv", ".xlsx", ".sas7bdat"]);
+
+/** Commands the dispatcher registers. Exported for the same reason as
+ *  SUPPORTED — the package.json consistency test asserts every
+ *  `SBT.*` command declared in `contributes.commands` shows up here. */
+export const REGISTERED_COMMANDS: readonly string[] = ["SBT.openTableFile"];
 
 class FileTableViewer implements SubscriptionProvider {
   private readonly webviewManager = new WebViewManager();

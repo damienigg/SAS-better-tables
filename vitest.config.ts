@@ -51,9 +51,6 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
   },
   optimizeDeps: {
-    // Pre-bundle React so every importer in the test process gets the
-    // same physical module — even when the importer lives under
-    // client/ (which has its own node_modules tree).
     include: [
       "react",
       "react-dom",
@@ -64,10 +61,12 @@ export default defineConfig({
     ],
     exclude: ["exceljs"],
   },
-  // No top-level `ssr.external` for exceljs — that would route it past
-  // vitest's `vi.mock` hook, which is how the unit suite stubs
-  // exceljs for `xlsxSource.test.ts`. The real exceljs is exercised
-  // by the @vscode/test-electron integration tier.
+  ssr: {
+    // exceljs is CJS with dynamic requires that vite's transformer
+    // cannot trace. Pass it through to Node's native loader so the
+    // export tests get the real binary writer/reader.
+    external: ["exceljs"],
+  },
   test: {
     globals: true,
     setupFiles: [path.resolve(root, "test/setup.ts")],
@@ -93,9 +92,6 @@ export default defineConfig({
     // for everything else (faster, and required for the React DOM
     // test setup to share a single React instance across the test
     // process).
-    poolMatchGlobs: [
-      ["test/unit/fileSource/xlsxSource.test.ts", "forks"],
-    ],
     server: {
       deps: {
         inline: [
@@ -103,10 +99,6 @@ export default defineConfig({
           /\/node_modules\/react-dom\//,
           /\/node_modules\/@testing-library\//,
           /\/node_modules\/scheduler\//,
-          // Force exceljs through vitest's transformer so vi.mock can
-          // intercept it. Default behaviour for CJS deps is to delegate
-          // to Node's loader, which bypasses module mocks.
-          "exceljs",
         ],
       },
     },

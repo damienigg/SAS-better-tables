@@ -20,6 +20,7 @@ import { createWriteStream, type WriteStream } from "fs";
 import { unlink } from "fs/promises";
 import path from "path";
 
+
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
 import {
   SortModel,
@@ -379,7 +380,8 @@ class DataViewer extends WebView {
     selection: CellRange[] | undefined,
     inSelection: (row: number) => boolean,
   ): Promise<void> {
-    // Lazy import so we don't load exceljs unless someone exports excel.
+    // Dynamic import keeps exceljs out of the cold-path bundle until
+    // someone exports xlsx.
     const ExcelJS = await import("exceljs");
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("data");
