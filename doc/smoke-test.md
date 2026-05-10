@@ -119,6 +119,92 @@ For each, paste into a scratch text file and confirm shape:
       (`age >>>>> 30`) — error appears in status bar; grid does not
       crash.
 
+## 11 — Open a file from the explorer (CSV)
+
+Drop a small CSV in your workspace (or use a checked-in fixture).
+
+- [ ] Right-click the `.csv` in the file explorer → **Open in Table Viewer**
+      appears under the SAS Better Tables group.
+- [ ] Click it. A new editor tab opens with the file basename in the tab.
+- [ ] Header row is treated as column names; numeric-looking columns
+      right-align.
+- [ ] Status bar shows `<n> rows`, no filter / selection stats.
+- [ ] Row-number gutter is on the left, frozen during horizontal scroll.
+
+## 12 — Open from the command palette / "Reopen with..."
+
+- [ ] Run `SAS Better Tables: Open in Table Viewer` from the command
+      palette with no file selected → a file-picker appears, filtered to
+      the supported extensions.
+- [ ] Right-click an `.xlsx` and pick **Reopen with...** → **SAS Better
+      Tables — Table Viewer** is offered as a non-default option.
+
+## 13 — TSV
+
+- [ ] A `.tsv` opens with tabs as the field delimiter (no commas
+      mis-split).
+- [ ] Cells containing literal tabs/newlines (CSV-quoted) survive
+      round-trip when copied back out as TSV.
+
+## 14 — XLSX, single sheet
+
+- [ ] Open a one-sheet `.xlsx`. Title is the file basename, not the
+      sheet name.
+- [ ] Date / boolean cells render as their string form, not as `[object
+      Object]`.
+- [ ] Cells with formula results show the *result*, not the formula
+      text.
+
+## 15 — XLSX, multi-sheet picker
+
+- [ ] Open a workbook with ≥ 2 sheets — a quickPick appears asking which
+      sheet to open.
+- [ ] Cancel it → no panel opens, no error toast.
+- [ ] Pick a sheet → panel title is `<file>.xlsx (<sheet name>)`.
+
+## 16 — In-memory sort & filter (CSV/TSV/XLSX)
+
+- [ ] Click a column header — `▲` appears, rows reorder. Numeric columns
+      sort numerically; text columns sort lexicographically; nulls and
+      empty cells sort last.
+- [ ] Open the funnel filter on a column with several distinct values.
+      The checklist shows the loaded distinct values; ticking only some
+      and clicking **Apply** narrows the grid.
+- [ ] In the WHERE-expression slot, type `> 30` (numeric column) and
+      click **Apply** — only rows where the column is > 30 remain.
+- [ ] Try `contains "foo"` on a text column — only rows whose value
+      contains `foo`.
+- [ ] Try `like "A%"` — only rows whose value starts with `A`.
+
+## 17 — Open a sas7bdat from the explorer
+
+This requires a connected SAS profile. Pick one before starting.
+
+- [ ] Right-click a `.sas7bdat` in the explorer → **Open in Table
+      Viewer**.
+- [ ] A progress notification briefly shows "Opening <name>" while the
+      libname assignment runs.
+- [ ] The viewer opens; it looks identical to opening a SAS-library
+      table from the Libraries tree.
+- [ ] Sort and filter both work — and behave server-side, not in
+      memory (the WHERE-expression evaluator is SAS, so SAS function
+      syntax like `upcase(name) = "BAR"` works).
+- [ ] **Show table properties** from the column-header context surface
+      opens the same `TablePropertiesViewer` used for library tables.
+- [ ] Open *another* sas7bdat from the same directory — the libname is
+      reused (no new `libname` statement is run on the session).
+- [ ] Open a sas7bdat from a *different* directory — a new `_SBT<n>`
+      libref is minted (visible in the SAS log if you have execution
+      log enabled).
+
+## 18 — sas7bdat without a profile
+
+- [ ] Disconnect / clear all profiles (`SAS: Switch Profile` and pick
+      none, if available, or remove all profiles).
+- [ ] Right-click a `.sas7bdat` → **Open in Table Viewer** — an info
+      message appears explaining a SAS profile is required. No panel
+      opens.
+
 ## Known deferred items (NOT bugs to file)
 
 - ITC connection: filter expressions are sent to the PowerShell runner
@@ -128,3 +214,13 @@ For each, paste into a scratch text file and confirm shape:
   drag-to-extend is not yet implemented (single click then shift-click
   is the workaround).
 - Column reorder by drag: not yet implemented.
+- File sources are loaded fully into memory. Files larger than a few
+  hundred MB will be slow or OOM the extension host. A streamed indexer
+  is a follow-up.
+- sas7bdat over a remote SAS server requires the file to be reachable
+  from the server's filesystem; opening a local sas7bdat against a Viya
+  cloud connection therefore won't work. Use a local IOM/SSH session
+  for that case.
+- Parquet, JSON / NDJSON, and Arrow are not handled. Parquet was
+  considered and dropped due to dependency size; JSON was dropped from
+  the v1 scope.

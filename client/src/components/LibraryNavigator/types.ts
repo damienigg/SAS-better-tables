@@ -5,6 +5,7 @@
 // the grid library used by the webview.
 
 import { ColumnCollection, TableInfo } from "../../connection/rest/api/compute";
+import type { ColumnFilter } from "../../webview/protocol";
 
 export const LibraryType = "library";
 export const TableType = "table";
@@ -29,7 +30,13 @@ export interface TableData {
 }
 
 export interface TableQuery {
+  /** SAS WHERE-clause fragment, used by server-backed adapters. */
   filterValue: string;
+  /** Raw filter spec as sent by the webview. SAS-server adapters ignore
+   *  this and read `filterValue`; in-memory adapters (csv/tsv/xlsx) read
+   *  this directly so they don't have to round-trip through SAS WHERE
+   *  syntax just to undo it. */
+  filters?: ColumnFilter[];
 }
 
 export type SortDirection = "asc" | "desc";

@@ -591,7 +591,25 @@
         "editor.defaultFormatter": "SAS.sas-lsp"
       }
     },
+    "customEditors": [
+      {
+        "viewType": "sbt.tableViewer",
+        "displayName": "SAS Better Tables — Table Viewer",
+        "selector": [
+          { "filenamePattern": "*.sas7bdat" },
+          { "filenamePattern": "*.csv" },
+          { "filenamePattern": "*.tsv" },
+          { "filenamePattern": "*.xlsx" }
+        ],
+        "priority": "option"
+      }
+    ],
     "commands": [
+      {
+        "command": "SBT.openTableFile",
+        "title": "Open in Table Viewer",
+        "category": "SAS Better Tables"
+      },
       {
         "command": "SAS.run",
         "title": "%commands.SAS.run%",
@@ -952,6 +970,11 @@
           "command": "SAS.content.convertNotebookToFlow",
           "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
           "group": "actionsgroup@0"
+        },
+        {
+          "command": "SBT.openTableFile",
+          "when": "resourceExtname =~ /\\.(csv|tsv|xlsx|sas7bdat)$/",
+          "group": "navigation@10"
         }
       ],
       "view/item/context": [

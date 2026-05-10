@@ -38,6 +38,7 @@ import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { ContentSourceType } from "../components/ContentNavigator/types";
+import FileTableViewer from "../components/FileTableViewer";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import {
@@ -137,6 +138,7 @@ export function activate(context: ExtensionContext) {
   };
 
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
+  const fileTableViewer = new FileTableViewer(context);
 
   window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, {
     deserializeWebviewPanel,
@@ -183,6 +185,7 @@ export function activate(context: ExtensionContext) {
     ...sasContentNavigator.getSubscriptions(),
     ...sasServerNavigator.getSubscriptions(),
     ...resultPanelSubscriptionProvider.getSubscriptions(),
+    ...fileTableViewer.getSubscriptions(),
     sasContentNavigator.onDidManipulateFile(handleFileUpdated),
     sasServerNavigator.onDidManipulateFile(handleFileUpdated),
     // If configFile setting is changed, update watcher to watch new configuration file

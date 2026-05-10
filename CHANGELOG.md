@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Fork — Unreleased]
+
+Entries below this heading describe changes made on the `damienigg/SAS-better-tables` fork on top of the upstream `sassoftware/vscode-sas-extension @ 2dfcc49`. Upstream entries continue under the original "Unreleased" heading further down.
+
+### Added
+
+- **File-explorer table viewer.** Right-click any `.csv`, `.tsv`, `.xlsx`, or `.sas7bdat` in the file explorer and pick **Open in Table Viewer** to open it in the same panel that opens for SAS-library tables. Also exposed as the `SBT.openTableFile` command and as a non-default custom editor (`Reopen with...` → "SAS Better Tables — Table Viewer").
+  - csv / tsv: streaming RFC-4180 parser; header row + first-200-row type inference; in-memory sort, checklist filter, and a small WHERE-expression evaluator (`= != <> < <= > >= contains like in (...)`).
+  - xlsx: read via the existing `exceljs` dependency; multi-sheet workbooks prompt for a sheet pick.
+  - sas7bdat: routed through the active SAS connection — a libname is assigned to the file's directory and the dataset opens through the **same** `LibraryAdapter` and panel as a normal Libraries-tree table, so server-side WHERE, pagination, and column properties all work identically.
+- Extended `TableQuery` with an optional raw `filters` field so in-memory adapters do not have to round-trip through SAS WHERE syntax.
+
+### Changed
+
+- Replaced the ag-grid–based table viewer with an mssql-style `react-data-grid` viewer (initial fork rewrite). Adds: header sort indicator with three-state toggle; header filter popup with checklist + WHERE-expression slot; multi-cell selection (click / shift-click / ctrl-click); copy variants (plain / with headers / headers only / CSV / JSON / TSV); export of selection / visible / all rows as CSV / JSON / Excel; selection summary with sum / avg / min / max / distinct / nulls; cell-detail side panel with JSON / XML pretty-print.
+- `panels/DataViewer.fetchColumns` widened from `() => Column[]` to `() => Column[] | Promise<Column[]>` and is now awaited (the upstream library-tree call site already passed an async function — this fixes a latent runtime error introduced by the rewrite).
+- `panels/DataViewer.loadColumnProperties` is now optional, so file-backed sources without a SAS dictionary can omit it.
+- Webview message dispatch consolidated into a single `window` listener bus shared by the pump and the App component.
+
+### Fixed
+
+- **Grid materialisation.** Row skeletons no longer rebuild a `rowCount × columns` cell dictionary on every page response; cell values are read from the store via per-cell selectors, so virtualisation cost stays bounded by viewport.
+- **Pump page-leak on host error.** Each `PendingRequest` now carries the page it was meant to fill; on an `error` response the page is removed from `requestedPages` so the next `ensureRange` retries it.
+- **Export streams.** CSV / JSON / XLSX exports are wrapped in a single try/catch that unlinks the partial file on failure; stream `.end()` is promisified; backpressure is honoured per chunk.
+- **l10n attribute escaping.** The localisation bundle is HTML-escaped before being embedded in `data-l10n=""`, so apostrophes in translations cannot break out of the attribute.
+- **Store reset.** `init` now clears `loading`, `error`, and `cellDetail`, so re-init after a server error or mid-fetch leaves no stale UI.
+- **Toolbar dropdown race.** The trigger's blur-based close handler was replaced with a click-outside + Escape listener and close-on-item-click, eliminating the mousedown→blur→click race that suppressed menu-item clicks in some browsers.
+- **Filter popup completeness warning.** When the distinct-value checklist is built from a partially loaded cache, a warning row directs the user to the WHERE-expression slot for full-table filtering.
+- **Cell hash collisions.** Selection / copy / stats now use a string `row|col` key instead of `row*1e6+col`, removing the implicit max-1M-columns assumption.
+- **TSV / plain copy preserves embedded delimiters.** Cells containing tabs, CR / LF, or `"` are CSV-quoted instead of being rewritten to spaces (was lossy on multi-line text).
+
+### Other notes
+
+- Lifted upstream row-cap heuristics in `RestLibraryAdapter` and `ItcLibraryAdapter`; fixed an upstream view-leak in `getSortedRows`.
+- 60-second hardcoded request timeout removed.
+- Manual smoke-test plan in `doc/smoke-test.md` is the verification floor for this fork — there is no automated test suite for the table-viewer code yet.
+
+---
+
+The remainder of this file is the upstream changelog from `sassoftware/vscode-sas-extension`, preserved for historical context.
+
 ## Unreleased
 
 ### Added

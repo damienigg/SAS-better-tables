@@ -7,8 +7,10 @@ results grid.
 
 Everything else in the original SAS extension — language service, notebook
 support, content navigator, profiles, OAuth, syntax — is preserved unchanged.
-Only the table viewer that opens when you click a dataset in the **Libraries**
-tree has been replaced.
+Two pieces are different from upstream: the table viewer that opens when you
+click a dataset in the **Libraries** tree has been replaced, and the same
+viewer can now be opened directly on local data files (`.csv`, `.tsv`,
+`.xlsx`, `.sas7bdat`) from the file explorer.
 
 ## Why a fork?
 
@@ -18,6 +20,8 @@ cannot intercept the table-open flow. A fork is the only way to ship a
 drop-in replacement viewer.
 
 ## What's different from upstream
+
+### Table viewer
 
 - **New webview**: virtualised grid built on `react-data-grid`, replacing the
   ag-grid-based viewer.
@@ -37,6 +41,33 @@ drop-in replacement viewer.
 - **Stale-request cancellation** in the row pump so fast scrolling does not
   flicker.
 - **No 60-second hardcoded request timeout.**
+
+### File-explorer integration
+
+The same viewer also opens local data files. Right-click a supported file in
+the **Explorer** view and pick **Open in Table Viewer**, or run
+`SAS Better Tables: Open in Table Viewer` from the command palette, or
+"Reopen with..." → **SAS Better Tables — Table Viewer**.
+
+| Format         | Backed by                                           | Sort & filter        |
+|----------------|-----------------------------------------------------|----------------------|
+| `.csv`, `.tsv` | RFC-4180 streaming parser, header-row + type sniff  | in-memory predicate  |
+| `.xlsx`        | `exceljs`; multi-sheet workbooks prompt for a sheet | in-memory predicate  |
+| `.sas7bdat`    | Routed through your active SAS connection: a libname is assigned to the file's directory and the dataset opens through the **same** `LibraryAdapter` and panel as a normal Libraries-tree table | server-side WHERE |
+
+The custom editor is registered at priority `option`, so it never overrides
+the built-in handler for `.csv` / `.xlsx`. Use the explorer right-click or
+"Reopen with..." menu to launch it explicitly.
+
+#### sas7bdat caveats
+
+- Requires a connected SAS profile (Viya / IOM / COM / SSH). Without one the
+  extension surfaces a message inviting you to add a profile.
+- The file's *directory* must be readable from the SAS server. A Viya
+  connection on a remote server cannot open a sas7bdat that lives only on
+  your local machine — the file needs to be on a path the SAS session can
+  resolve. ITC and SSH connections to a server you control usually work
+  out of the box.
 
 ## Installing
 

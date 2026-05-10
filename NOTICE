@@ -17,5 +17,12 @@ results grid (https://github.com/Microsoft/vscode-mssql, MIT license). No
 source from the mssql extension is included; behavior parity was achieved
 by clean-room re-implementation against publicly observable UX.
 
+The fork also adds a file-explorer integration (client/src/components/
+FileTableViewer/*) that opens local data files (.csv, .tsv, .xlsx,
+.sas7bdat) in the same viewer. CSV/TSV are parsed by a hand-rolled
+RFC-4180 reader; XLSX is read via the existing exceljs dependency
+(MIT license); .sas7bdat files are routed through the connected SAS
+session and reuse the upstream LibraryAdapter unchanged.
+
 All file-level copyright headers in unchanged upstream files are preserved.
 New files contributed by this fork carry their own header.

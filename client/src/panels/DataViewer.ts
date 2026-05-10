@@ -60,8 +60,10 @@ class DataViewer extends WebView {
       data: TableData;
       error?: Error;
     }>,
-    protected readonly fetchColumns: () => Column[],
-    protected readonly loadColumnProperties: (columnName: string) => void,
+    protected readonly fetchColumns: () =>
+      | Column[]
+      | Promise<Column[]>,
+    protected readonly loadColumnProperties?: (columnName: string) => void,
   ) {
     super(extensionUri, uid);
   }
@@ -138,7 +140,9 @@ class DataViewer extends WebView {
           await env.clipboard.writeText(msg.text);
           return;
         case "open-column-properties":
-          this.loadColumnProperties(msg.colId);
+          // File-backed sources have no SAS dictionary view to surface; the
+          // host simply ignores the request when no provider is wired.
+          this.loadColumnProperties?.(msg.colId);
           return;
         case "save-view-state":
           this.viewState = msg.state;
@@ -162,7 +166,10 @@ class DataViewer extends WebView {
   }
 
   private async sendInit(): Promise<void> {
-    const rawColumns = this.fetchColumns();
+    // `fetchColumns` may be either sync or async. Library-table flows pass
+    // `() => model.fetchColumns(item)` which awaits the SAS server, while
+    // file-table flows return an already-parsed list synchronously.
+    const rawColumns = await this.fetchColumns();
     this.columnMeta = rawColumns.map(toColumnMeta);
     this.post({
       kind: "init",
@@ -470,7 +477,11 @@ function combineFilters(filters: ColumnFilter[]): TableQuery | undefined {
       parts.push(`(${f.colId} in (${list}))`);
     }
   }
-  return parts.length === 0 ? undefined : { filterValue: parts.join(" and ") };
+  if (parts.length === 0) {return undefined;}
+  // Attach the raw filter array alongside the SAS WHERE string. Library
+  // adapters read `filterValue`; file-backed adapters read `filters`
+  // directly so they don't have to re-parse SAS syntax to undo it.
+  return { filterValue: parts.join(" and "), filters };
 }
 
 /** Write a chunk and wait for `drain` if the stream signals backpressure.
