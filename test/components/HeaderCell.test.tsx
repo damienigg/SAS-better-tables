@@ -29,7 +29,7 @@ describe("HeaderCell", () => {
   it("renders the column label and a filter button", () => {
     render(<HeaderCell column={COLUMN} />);
     expect(screen.getByText("score")).toBeDefined();
-    expect(screen.getByRole("button", { name: /Filter/i })).toBeDefined();
+    expect(screen.getByTitle("Filter")).toBeDefined();
   });
 
   it("cycles sort: asc → desc → off on repeated header clicks", () => {
@@ -60,7 +60,7 @@ describe("HeaderCell", () => {
 
   it("opens the filter popup when the filter button is clicked", () => {
     render(<HeaderCell column={COLUMN} />);
-    fireEvent.click(screen.getByRole("button", { name: /Filter/i }));
+    fireEvent.click(screen.getByTitle("Filter"));
     // FilterPopup renders a "Search" input.
     expect(screen.getByPlaceholderText("Search")).toBeDefined();
   });

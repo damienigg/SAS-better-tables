@@ -54,9 +54,9 @@ export class Uri {
 // Events / disposables
 // --------------------------------------------------------------------------
 
-export interface Disposable {
-  dispose(): void;
-}
+// `Disposable` is exported both as a value (class with static `.from`)
+// and as a type (declaration-merged interface) further down. This
+// matches how the real vscode module exposes it.
 
 export class EventEmitter<T> {
   private readonly emitter = new NodeEventEmitter();
@@ -186,7 +186,63 @@ export const window = {
     _viewType: string,
     _serializer: unknown,
   ): Disposable => ({ dispose: () => undefined }),
+  createStatusBarItem: (_alignment?: number, _priority?: number) => ({
+    text: "",
+    tooltip: "" as string | unknown,
+    command: "" as string | undefined,
+    show: () => undefined,
+    hide: () => undefined,
+    dispose: () => undefined,
+  }),
+  createTreeView: (_id: string, _opts: unknown): unknown => ({
+    onDidChangeSelection: () => ({ dispose: () => undefined }),
+    onDidChangeVisibility: () => ({ dispose: () => undefined }),
+    dispose: () => undefined,
+  }),
+  registerTreeDataProvider: (
+    _viewId: string,
+    _provider: unknown,
+  ): Disposable => ({ dispose: () => undefined }),
+  registerFileDecorationProvider: (
+    _provider: unknown,
+  ): Disposable => ({ dispose: () => undefined }),
 };
+
+export class MarkdownString {
+  public value: string;
+  public constructor(value?: string) {
+    this.value = value ?? "";
+  }
+  public appendText(value: string): MarkdownString {
+    this.value += value;
+    return this;
+  }
+  public appendMarkdown(value: string): MarkdownString {
+    this.value += value;
+    return this;
+  }
+}
+
+export class FileSystemError extends Error {
+  public readonly code: string;
+  public constructor(message?: string) {
+    super(message);
+    this.code = "FileSystemError";
+  }
+  public static FileNotFound(message?: string): FileSystemError {
+    return new FileSystemError(message);
+  }
+  public static FileExists(message?: string): FileSystemError {
+    return new FileSystemError(message);
+  }
+}
+
+export enum FileType {
+  Unknown = 0,
+  File = 1,
+  Directory = 2,
+  SymbolicLink = 64,
+}
 
 // Helpers exposed for assertion in tests:
 export const __testHooks = {
@@ -288,6 +344,91 @@ export enum ViewColumn {
   One = 1,
   Two = 2,
   Three = 3,
+  Left = -4,
+  Right = -5,
+}
+
+// Many extension-host modules touch these enums at module-init time
+// (e.g. as default arguments or in static class fields). They must be
+// reachable on the mock module or the import cascade will throw a
+// "Cannot read properties of undefined" before any test gets a chance
+// to run.
+
+export enum DiagnosticSeverity {
+  Error = 0,
+  Warning = 1,
+  Information = 2,
+  Hint = 3,
+}
+
+export class CodeActionKind {
+  public static readonly Empty = new CodeActionKind("");
+  public static readonly QuickFix = new CodeActionKind("quickfix");
+  public static readonly Refactor = new CodeActionKind("refactor");
+  public static readonly RefactorExtract = new CodeActionKind("refactor.extract");
+  public static readonly RefactorInline = new CodeActionKind("refactor.inline");
+  public static readonly RefactorRewrite = new CodeActionKind("refactor.rewrite");
+  public static readonly Source = new CodeActionKind("source");
+  public static readonly SourceOrganizeImports = new CodeActionKind("source.organizeImports");
+  public constructor(public readonly value: string) {}
+  public append(parts: string): CodeActionKind {
+    return new CodeActionKind(`${this.value}.${parts}`);
+  }
+}
+
+export class CodeAction {
+  public title: string;
+  public kind?: CodeActionKind;
+  public command?: { command: string; title: string; arguments?: unknown[] };
+  public constructor(title: string, kind?: CodeActionKind) {
+    this.title = title;
+    this.kind = kind;
+  }
+}
+
+export class Position {
+  public constructor(public readonly line: number, public readonly character: number) {}
+}
+
+export class Range {
+  public constructor(
+    public readonly start: Position,
+    public readonly end: Position,
+  ) {}
+}
+
+export class Diagnostic {
+  public constructor(
+    public range: Range,
+    public message: string,
+    public severity?: DiagnosticSeverity,
+  ) {}
+}
+
+export class RelativePattern {
+  public constructor(public base: Uri | string, public pattern: string) {}
+}
+
+export class ThemeIcon {
+  public constructor(public readonly id: string) {}
+}
+
+export enum StatusBarAlignment {
+  Left = 1,
+  Right = 2,
+}
+
+export enum TreeItemCollapsibleState {
+  None = 0,
+  Collapsed = 1,
+  Expanded = 2,
+}
+
+export class TreeItem {
+  public constructor(
+    public readonly label: string | unknown,
+    public collapsibleState?: TreeItemCollapsibleState,
+  ) {}
 }
 
 export class Disposable {

@@ -1566,6 +1566,12 @@
     "jsdom": "^24.1.0",
     "@testing-library/react": "^16.0.0",
     "@testing-library/dom": "^10.4.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "overrides": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   }
 }

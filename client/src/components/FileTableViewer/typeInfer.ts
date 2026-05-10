@@ -33,7 +33,9 @@ export function inferColumns(
       if (isNum && !NUMERIC_RE.test(v)) {isNum = false;}
       if (isDate && !DATE_RE.test(v)) {isDate = false;}
       if (isDt && !DATETIME_RE.test(v)) {isDt = false;}
-      if (!isNum && !isDate && !isDt) {break;}
+      // Don't break once the type is decided — we still want to track
+      // maxLen across the rest of the sample so char columns get an
+      // accurate length estimate.
     }
 
     let type: string;

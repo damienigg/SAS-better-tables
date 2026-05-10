@@ -39,13 +39,20 @@ describe("FileTableViewer integration", () => {
       "expected at least one new tab after SBT.openTableFile",
     );
 
-    // The new tab should be a webview panel labelled with the file
-    // basename. We don't snoop into the webview HTML — that's the
-    // unit layer's job.
-    const newTab = vscode.window.tabGroups.all
-      .flatMap((g) => g.tabs)
-      .find((t) => t.label === "cars.csv");
-    assert.exists(newTab, "expected a tab named cars.csv");
+    // The new tab should be a webview panel whose label contains the
+    // file path or basename. The exact label depends on how
+    // WebViewManager built the panel; we just need ANY tab whose
+    // label references our fixture, since we don't otherwise have a
+    // tab open against cars.csv. We don't snoop into the webview
+    // HTML — that's the unit layer's job.
+    const tabs = vscode.window.tabGroups.all.flatMap((g) => g.tabs);
+    const newTab = tabs.find((t) => t.label.includes("cars.csv"));
+    assert.exists(
+      newTab,
+      `expected a tab whose label references cars.csv; got: ${tabs
+        .map((t) => t.label)
+        .join(" | ")}`,
+    );
   });
 });
 

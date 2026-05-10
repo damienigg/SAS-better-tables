@@ -8,7 +8,12 @@
     "outDir": "out",
     "rootDir": ".",
     "sourceMap": true,
-    "target": "es2019"
+    "target": "es2019",
+    // Silences upstream type errors in node_modules — namely
+    // vscode-jsonrpc/browser referencing DedicatedWorkerGlobalScope
+    // (which lives in the WebWorker lib that we don't include for the
+    // client's main build target).
+    "skipLibCheck": true
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", ".vscode-test"]

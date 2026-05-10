@@ -58,9 +58,8 @@ describe("copy.buildCopyText", () => {
       columns: COLS,
       getCell: (r, c) => dataMap[`${r}:${c}`],
     });
-    const [header, row] = out.split("\n");
-    expect(header).toBe("a,b,c");
-    expect(row).toBe('"x,y","a""b","line\nbreak"');
+    // The data row contains a literal LF; can't naively split on \n.
+    expect(out).toBe('a,b,c\n"x,y","a""b","line\nbreak"');
   });
 
   it("tsv → header then tab-separated data", () => {

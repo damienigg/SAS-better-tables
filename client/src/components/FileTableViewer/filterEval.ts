@@ -49,14 +49,18 @@ function compile(f: ColumnFilter, idx: number): RowPredicate {
   return () => true;
 }
 
+// Optional leading column-name token, then the operator, then the
+// rest of the expression. The operator group is in a non-capturing
+// alternation; the engine backtracks past the optional prefix when a
+// would-be column name is itself the operator (e.g. `contains "foo"`).
+// Word-op alternatives carry their own \b so they cannot be a prefix
+// of a longer identifier; symbolic ops do not — \b would not match
+// at the transition between two non-word characters.
 const OP_RE =
-  /^(>=|<=|!=|<>|=|<|>|contains|like|in)\s*([\s\S]*)$/i;
+  /^(?:[A-Za-z_][A-Za-z0-9_]*\s+)?(>=|<=|!=|<>|=|<|>|contains\b|like\b|in\b)\s*([\s\S]*)$/i;
 
 function compileExpr(expr: string, idx: number): RowPredicate {
-  // Drop a leading column name if the user typed `colname op value`. We
-  // already know which column this expression applies to.
-  const s = expr.replace(/^[A-Za-z_][A-Za-z0-9_]*\s+/, "");
-  const m = s.match(OP_RE);
+  const m = expr.match(OP_RE);
   if (!m) {return () => true;}
   const op = m[1].toLowerCase();
   let raw = m[2].trim();
