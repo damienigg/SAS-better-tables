@@ -88,6 +88,48 @@ npm run compile
 The extension's main entry is `client/dist/node/extension.js`. Press F5 in
 VS Code with the repo open to launch an Extension Development Host.
 
+## Testing
+
+The test stack has three layers, each with its own runner:
+
+| Layer | Runner | Command | What it covers |
+|-------|--------|---------|----------------|
+| Unit + component | [Vitest](https://vitest.dev/) (jsdom) | `npm run test:unit` | Pure modules (`webview/*`, `FileTableViewer/*`, host helpers) and React webview components (Toolbar, StatusBar, FilterPopup, HeaderCell, CellDetail, CellView). Sub-second feedback loop. |
+| VS Code integration | [@vscode/test-electron](https://github.com/microsoft/vscode-test) (mocha) | `npm run test:vscode` | Real Extension Development Host. Asserts that `SBT.openTableFile` is registered and opens a webview tab against the `cars.csv` fixture. |
+| Server (LSP) | mocha + ts-node | `npm run test-server` | Language-server / embedded-language tests from upstream. |
+
+`npm test` runs all three. Coverage is enforced on the unit layer
+(80% lines / statements / functions, 75% branches) over the new code in
+`client/src/webview/**`, `client/src/panels/DataViewer*.ts`, and
+`client/src/components/FileTableViewer/**` — `npm run test:coverage`
+produces an HTML report under `coverage/`.
+
+### Test layout
+
+```
+test/                            ← Vitest tree (unit + component)
+  unit/
+    webview/         protocol, copy, selection, formatters, stats,
+                     store, pump, messaging, theme
+    fileSource/      csvParser, typeInfer, filterEval, inMemorySource,
+                     csvSource, xlsxSource, sas7bdatSource
+    host/            DataViewerHelpers, DataViewer.processMessage,
+                     dispatcher
+  components/        React component tests (jsdom + Testing Library)
+  fixtures/          cars.csv, quoted.csv, nullable.csv, tabs.tsv,
+                     bom.csv (xlsx fixtures are generated at runtime)
+  helpers/           fakeAdapter, fakeSession, fakePanel, messaging,
+                     store
+  mocks/             vscode  — hand-rolled stub of the vscode API
+client/test/                     ← @vscode/test-electron tree (mocha)
+  fileTableViewer.test.ts        ← integration smoke for SBT.openTableFile
+  ... (upstream LSP / connection / notebook tests)
+```
+
+The vscode API is stubbed for the unit layer at `test/mocks/vscode.ts`;
+Vitest's `resolve.alias` redirects every `import "vscode"` to that
+file. Tests that need the real API run in the integration layer.
+
 ## Licence
 
 Apache 2.0 — same as upstream. See `LICENSE` for the full text and `NOTICE`

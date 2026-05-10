@@ -10,6 +10,12 @@ Entries below this heading describe changes made on the `damienigg/SAS-better-ta
 
 ### Added
 
+- **Test framework.** Vitest unit + component suite (jsdom) on top of the existing mocha + @vscode/test-electron integration runner. Hand-rolled `vscode` stub at `test/mocks/vscode.ts` lets host-side modules be unit-tested without booting a real Extension Development Host. Coverage gate at 80%/75% (lines/branches) over the new fork code via `@vitest/coverage-v8`. Layout is documented in the README's "Testing" section.
+  - 16 unit-test files covering protocol, copy, selection, formatters, stats, store, pump, messaging, theme, csvParser, typeInfer, filterEval, inMemorySource, csvSource, xlsxSource, sas7bdatSource, DataViewerHelpers, DataViewer.processMessage, dispatcher.
+  - 6 React component tests (Toolbar, StatusBar, FilterPopup, HeaderCell, CellDetail, CellView) using Testing Library.
+  - 1 VS Code integration test that asserts `SBT.openTableFile` is registered and opens a webview tab against a CSV fixture.
+- **`panels/DataViewerHelpers.ts`.** Extracted pure helpers (`combineFilters`, `csvCell`, `isWebviewMessage`, `toColumnMeta`, `mapType`, `buildSelectionPredicate`, `inSelectionAtCell`) into their own module so they can be unit-tested in isolation. The panel class itself imports them.
+- **Test-only reset hooks** on mutable singletons (`webview/messaging.__resetForTests`, `webview/pump.__pendingForTests` and `resetPump`, `FileTableViewer/sas7bdatSource.__resetForTests`) so tests start each case from a clean state without restarting the test process.
 - **File-explorer table viewer.** Right-click any `.csv`, `.tsv`, `.xlsx`, or `.sas7bdat` in the file explorer and pick **Open in Table Viewer** to open it in the same panel that opens for SAS-library tables. Also exposed as the `SBT.openTableFile` command and as a non-default custom editor (`Reopen with...` → "SAS Better Tables — Table Viewer").
   - csv / tsv: streaming RFC-4180 parser; header row + first-200-row type inference; in-memory sort, checklist filter, and a small WHERE-expression evaluator (`= != <> < <= > >= contains like in (...)`).
   - xlsx: read via the existing `exceljs` dependency; multi-sheet workbooks prompt for a sheet pick.

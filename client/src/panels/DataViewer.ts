@@ -28,10 +28,17 @@ import {
 } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
+import {
+  buildSelectionPredicate,
+  combineFilters,
+  csvCell,
+  inSelectionAtCell,
+  isWebviewMessage,
+  toColumnMeta,
+} from "./DataViewerHelpers";
 import type {
   CellRange,
   ColumnFilter,
-  ColumnKind,
   ColumnMeta,
   ExportFormat,
   ExportScope,
@@ -427,63 +434,6 @@ class DataViewer extends WebView {
 // helpers
 // --------------------------------------------------------------------------
 
-function toColumnMeta(c: Column): ColumnMeta {
-  const name = c.name ?? c.id ?? "";
-  return {
-    id: name,
-    name,
-    label: c.label,
-    kind: mapType(c.type),
-    length: c.length,
-    format: c.format?.name,
-  };
-}
-
-function mapType(t: string | undefined): ColumnKind {
-  switch ((t || "").toLowerCase()) {
-    case "char":
-    case "string":
-    case "text":
-      return "char";
-    case "num":
-    case "numeric":
-    case "double":
-    case "integer":
-      return "num";
-    case "date":
-      return "date";
-    case "time":
-      return "time";
-    case "datetime":
-    case "dt":
-      return "datetime";
-    case "currency":
-      return "currency";
-    default:
-      return "unknown";
-  }
-}
-
-function combineFilters(filters: ColumnFilter[]): TableQuery | undefined {
-  const parts: string[] = [];
-  for (const f of filters) {
-    if (f.expr && f.expr.trim()) {
-      parts.push(`(${f.expr.trim()})`);
-    } else if (f.values) {
-      // Quote each value as a string literal. This is best-effort for char
-      // columns; numeric columns won't match if the user includes quotes.
-      // The `expr` slot exists for that case.
-      const list = f.values.map((v) => `"${v.replace(/"/g, '""')}"`).join(",");
-      parts.push(`(${f.colId} in (${list}))`);
-    }
-  }
-  if (parts.length === 0) {return undefined;}
-  // Attach the raw filter array alongside the SAS WHERE string. Library
-  // adapters read `filterValue`; file-backed adapters read `filters`
-  // directly so they don't have to re-parse SAS syntax to undo it.
-  return { filterValue: parts.join(" and "), filters };
-}
-
 /** Write a chunk and wait for `drain` if the stream signals backpressure.
  *  Without this, large exports balloon node's internal buffer and can OOM
  *  on tables with millions of rows. */
@@ -511,63 +461,6 @@ function endStream(stream: WriteStream): Promise<void> {
     stream.once("error", reject);
     stream.end(() => resolve());
   });
-}
-
-function csvCell(v: string | null | undefined): string {
-  if (v === null || v === undefined) {return "";}
-  if (
-    v.indexOf(",") === -1 &&
-    v.indexOf('"') === -1 &&
-    v.indexOf("\n") === -1
-  ) {
-    return v;
-  }
-  return `"${v.replace(/"/g, '""')}"`;
-}
-
-function buildSelectionPredicate(
-  selection: CellRange[],
-): (row: number) => boolean {
-  return (row: number) =>
-    selection.some((r) => row >= r.fromRow && row <= r.toRow);
-}
-
-function inSelectionAtCell(
-  selection: CellRange[],
-  row: number,
-  col: number,
-): boolean {
-  for (const r of selection) {
-    if (
-      row >= r.fromRow &&
-      row <= r.toRow &&
-      col >= r.fromCol &&
-      col <= r.toCol
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
-const KNOWN_KINDS = new Set([
-  "ready",
-  "rows-req",
-  "open-column-properties",
-  "save-view-state",
-  "copy",
-  "export",
-]);
-
-function isWebviewMessage(value: unknown): value is WebviewMessage {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  if (!("kind" in value)) {
-    return false;
-  }
-  const kind = value.kind;
-  return typeof kind === "string" && KNOWN_KINDS.has(kind);
 }
 
 export default DataViewer;

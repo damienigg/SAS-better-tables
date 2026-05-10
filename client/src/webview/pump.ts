@@ -87,3 +87,9 @@ export function bindPump(): () => void {
 export function resetPump(): void {
   pending.clear();
 }
+
+/** Test-only window into the pending map. Lets tests assert which
+ *  pages are currently in flight without exporting the map itself. */
+export function __pendingForTests(): ReadonlyMap<number, { generation: number; page: number }> {
+  return pending;
+}

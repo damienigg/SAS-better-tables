@@ -63,3 +63,20 @@ let nextId = 1;
 export function nextReqId(): number {
   return nextId++;
 }
+
+// --------------------------------------------------------------------------
+// Test-only API
+// --------------------------------------------------------------------------
+//
+// Vitest runs each test file in a fresh module instance, but a single
+// file can contain many tests. Exposing a reset hook lets the file's
+// `beforeEach` clear the cached vscode-api handle, the listener set,
+// and the request-id sequence so cross-test bleed cannot happen.
+// Production callers never invoke this (it has no other reachable
+// reference path).
+export function __resetForTests(): void {
+  cached = undefined;
+  listeners.clear();
+  installed = false;
+  nextId = 1;
+}

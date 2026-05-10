@@ -1520,7 +1520,11 @@
     "pretest": "npm run compile && tsc -p ./client",
     "test-client": "node ./client/out/test/runTest.js",
     "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
-    "test": "npm run test-server && npm run test-client",
+    "test:unit": "vitest run --reporter=verbose",
+    "test:unit:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:vscode": "npm run pretest && npm run test-client",
+    "test": "npm run test-server && npm run test:unit && npm run test:vscode",
     "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs",
@@ -1556,6 +1560,12 @@
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
     "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2"
+    "webpack-cli": "^7.0.2",
+    "vitest": "^1.6.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "jsdom": "^24.1.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@types/react-dom": "^19.0.0"
   }
 }

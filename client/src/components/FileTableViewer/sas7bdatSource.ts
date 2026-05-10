@@ -111,10 +111,18 @@ async function ensureLibref(dir: string): Promise<string> {
 /** SAS dataset names are case-insensitive, max 32 chars, alphanumeric
  *  plus underscore, and must start with a letter or underscore. We map
  *  the file's basename onto that namespace conservatively. */
-function sasNameFromBasename(basename: string): string {
+export function sasNameFromBasename(basename: string): string {
   const stem = basename.replace(/\.sas7bdat$/i, "");
   let s = stem.replace(/[^A-Za-z0-9_]/g, "_").slice(0, 32);
   if (!/^[A-Za-z_]/.test(s)) {s = "_" + s.slice(1);}
   return s.toUpperCase() || "DATA";
+}
+
+/** Test-only reset for the directory→libref cache and counter. The
+ *  module is a singleton at runtime; tests need to start from a clean
+ *  slate so libref minting is deterministic. */
+export function __resetForTests(): void {
+  librefCounter = 0;
+  dirToLibref.clear();
 }
 
