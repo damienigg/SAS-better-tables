@@ -1501,13 +1501,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sassoftware/vscode-sas-extension"
+    "url": "https://github.com/damienigg/SAS-better-tables"
   },
   "bugs": {
-    "url": "https://github.com/sassoftware/vscode-sas-extension/issues"
+    "url": "https://github.com/damienigg/SAS-better-tables/issues"
   },
-  "homepage": "https://www.sas.com",
-  "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
+  "homepage": "https://github.com/damienigg/SAS-better-tables",
+  "qna": "marketplace",
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
     "lint": "node node_modules/eslint/bin/eslint.js \"./client/src/**/*.ts\" \"./client/src/**/*.tsx\" \"./server/src/**/*.ts\"",

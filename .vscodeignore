@@ -19,6 +19,8 @@ Thumbs.db
 tools
 doc/**
 prettier.config.js
+.claude/**
+CONTRIBUTING.md
 **/tsconfig.json
 **/webpack.config.js
 contributing.md
@@ -29,4 +31,13 @@ eslint.config.mjs
 pull_request_template.md
 l10n/bundle.l10n.json
 *.vsix
-*.node
+# Also exclude vitest/test scaffolding that lives at the repo root —
+# none of it ships with the extension.
+test/**
+vitest.config.ts
+tsconfig.test.json
+coverage/**
+# Intentionally NOT excluding *.node — the SSH connection type
+# requires cpufeatures-*.node and sshcrypto-*.node at the package
+# root (extension.js refs them as ../../../*.node). These binaries
+# are platform-specific to whatever ran `npm run compile`.
