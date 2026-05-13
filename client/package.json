@@ -18,7 +18,7 @@
     "media-typer": "^1.1.0",
     "papaparse": "^5.5.3",
     "react": "^19.2.5",
-    "react-data-grid": "7.0.0-beta.47",
+    "react-data-grid": "7.0.0-beta.59",
     "react-dom": "^19.2.5",
     "ssh2": "^1.17.0",
     "uuid": "^14.0.0",
