@@ -1561,7 +1561,7 @@
     "typescript": "^5.5.3",
     "webpack": "^5.106.2",
     "webpack-cli": "^7.0.2",
-    "vitest": "^1.6.0",
+    "vitest": "^4.1.6",
     "@vitest/coverage-v8": "^1.6.0",
     "jsdom": "^24.1.0",
     "@testing-library/react": "^16.0.0",
