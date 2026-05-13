@@ -1567,11 +1567,11 @@
     "@testing-library/react": "^16.0.0",
     "@testing-library/dom": "^10.4.0",
     "@types/react-dom": "^19.0.0",
-    "react": "19.2.5",
+    "react": "19.2.6",
     "react-dom": "19.2.5"
   },
   "overrides": {
-    "react": "19.2.5",
+    "react": "19.2.6",
     "react-dom": "19.2.5"
   }
 }
